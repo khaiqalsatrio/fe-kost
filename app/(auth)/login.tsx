@@ -41,6 +41,11 @@ export default function LoginScreen() {
           
           <ThemedView style={[styles.formContainer, { backgroundColor: Colors[colorScheme].background }]}>
             <View style={styles.header}>
+              <Image 
+                source={require('@/assets/images/logo_kost.jpg')} 
+                style={styles.logo} 
+                resizeMode="contain" 
+              />
               <ThemedText type="title" style={styles.title}>Welcome Back</ThemedText>
               <ThemedText style={{ color: Colors[colorScheme].icon }}>Login to your account to continue</ThemedText>
             </View>
@@ -149,9 +154,14 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 5,
   },
+  logo: {
+    width: 60,
+    height: 60,
+    marginBottom: 16,
+  },
   header: {
     marginBottom: 30,
-    marginTop: 10,
+    marginTop: 0,
   },
   title: {
     fontSize: 32,

@@ -1,6 +1,6 @@
-import React from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import React from 'react';
+import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -17,17 +17,22 @@ export default function OwnerDashboard() {
   return (
     <ThemedView style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 20), backgroundColor: Colors[colorScheme].surface, borderBottomColor: Colors[colorScheme].border }]}>
-        <View>
-          <ThemedText style={{ color: Colors[colorScheme].icon }}>Halo Juragan,</ThemedText>
-          <ThemedText type="title" style={styles.headerTitle}>Dashboard</ThemedText>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{
+            width: 50, height: 50, backgroundColor: '#fff', borderRadius: 14,
+            justifyContent: 'center', alignItems: 'center',
+            shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 3
+          }}>
+            <Image
+              source={require('@/assets/images/logo_kost.jpg')}
+              style={{ width: 34, height: 34 }}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={{ justifyContent: 'center' }}>
+            <ThemedText type="title" style={{ fontSize: 24, lineHeight: 28, fontWeight: '800' }}>Dashboard Owner</ThemedText>
+          </View>
         </View>
-        <TouchableOpacity 
-          style={[styles.addButton, { backgroundColor: Colors[colorScheme].tint }]}
-          onPress={() => router.push('/kost/create')}
-        >
-          <IconSymbol name="plus" size={16} color="#fff" />
-          <ThemedText style={styles.addButtonText}>Kost Baru</ThemedText>
-        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -39,7 +44,7 @@ export default function OwnerDashboard() {
             <ThemedText type="title" style={{ fontSize: 28 }}>0</ThemedText>
             <ThemedText style={{ color: Colors[colorScheme].icon, marginTop: 4 }}>Total Kost</ThemedText>
           </View>
-          
+
           <View style={[styles.statCard, { backgroundColor: Colors[colorScheme].surface, shadowColor: Colors[colorScheme].success }]}>
             <View style={[styles.statIconContainer, { backgroundColor: Colors[colorScheme].success + '15' }]}>
               <IconSymbol name="person.2.fill" size={24} color={Colors[colorScheme].success} />
@@ -58,7 +63,7 @@ export default function OwnerDashboard() {
           <ThemedText style={{ color: Colors[colorScheme].icon, textAlign: 'center', marginBottom: 16 }}>
             Mulai daftarkan properti Anda dan dapatkan penyewa pertama hari ini.
           </ThemedText>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.emptyButton, { backgroundColor: Colors[colorScheme].tint + '15' }]}
             onPress={() => router.push('/kost/create')}
           >

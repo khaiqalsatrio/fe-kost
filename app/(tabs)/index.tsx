@@ -1,6 +1,6 @@
-import React from 'react';
-import { StyleSheet, View, FlatList, TouchableOpacity, TextInput, Image, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import React from 'react';
+import { FlatList, Image, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -10,26 +10,26 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 const DUMMY_KOST = [
-  { 
-    id: '1', 
-    name: 'Kost Exclusive Senopati', 
-    price: '3.200.000', 
+  {
+    id: '1',
+    name: 'Kost Exclusive Senopati',
+    price: '3.200.000',
     city: 'Jakarta Selatan',
     image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=500',
     facilities: ['AC', 'WiFi', 'Km Dalam']
   },
-  { 
-    id: '2', 
-    name: 'Kost Mawar Kemang', 
-    price: '2.500.000', 
+  {
+    id: '2',
+    name: 'Kost Mawar Kemang',
+    price: '2.500.000',
     city: 'Jakarta Selatan',
     image: 'https://images.unsplash.com/photo-1502672260266-1c1de2d9d344?auto=format&fit=crop&q=80&w=500',
     facilities: ['AC', 'WiFi']
   },
-  { 
-    id: '3', 
-    name: 'Kost Anggrek UI', 
-    price: '1.500.000', 
+  {
+    id: '3',
+    name: 'Kost Anggrek UI',
+    price: '1.500.000',
     city: 'Depok',
     image: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&q=80&w=500',
     facilities: ['WiFi', 'Dapur']
@@ -45,9 +45,21 @@ export default function ExploreScreen() {
     <ThemedView style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 20), backgroundColor: Colors[colorScheme].background }]}>
         <View style={styles.headerTop}>
-          <View>
-            <ThemedText style={{ color: Colors[colorScheme].icon }}>Selamat Datang,</ThemedText>
-            <ThemedText type="title" style={styles.greeting}>Pencari Kost</ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <View style={{
+              width: 50, height: 50, backgroundColor: '#fff', borderRadius: 14,
+              justifyContent: 'center', alignItems: 'center',
+              shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 3
+            }}>
+              <Image
+                source={require('@/assets/images/logo_kost.jpg')}
+                style={{ width: 34, height: 34 }}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={{ justifyContent: 'center' }}>
+              <ThemedText type="title" style={{ fontSize: 24, lineHeight: 28, fontWeight: '800' }}>Sewa Kost</ThemedText>
+            </View>
           </View>
           <View style={[styles.avatar, { backgroundColor: Colors[colorScheme].tint + '20' }]}>
             <IconSymbol name="person.fill" size={24} color={Colors[colorScheme].tint} />
@@ -56,7 +68,7 @@ export default function ExploreScreen() {
 
         <View style={[styles.searchContainer, { backgroundColor: Colors[colorScheme].surface, shadowColor: Colors[colorScheme].icon }]}>
           <IconSymbol name="magnifyingglass" size={20} color={Colors[colorScheme].icon} />
-          <TextInput 
+          <TextInput
             style={[styles.searchInput, { color: Colors[colorScheme].text }]}
             placeholder="Cari lokasi atau nama kost..."
             placeholderTextColor={Colors[colorScheme].icon}
@@ -70,7 +82,7 @@ export default function ExploreScreen() {
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.card, { backgroundColor: Colors[colorScheme].surface, shadowColor: '#000' }]}
             onPress={() => router.push(`/kost/${item.id}`)}
             activeOpacity={0.8}
@@ -84,7 +96,7 @@ export default function ExploreScreen() {
                   <ThemedText style={styles.ratingText}>4.8</ThemedText>
                 </View>
               </View>
-              
+
               <View style={styles.locationContainer}>
                 <IconSymbol name="mappin.and.ellipse" size={14} color={Colors[colorScheme].icon} />
                 <ThemedText style={[styles.cityText, { color: Colors[colorScheme].icon }]}>{item.city}</ThemedText>
@@ -99,7 +111,7 @@ export default function ExploreScreen() {
               </View>
 
               <View style={styles.divider} />
-              
+
               <View style={styles.priceFooter}>
                 <View style={styles.priceContainer}>
                   <ThemedText type="subtitle" style={[styles.price, { color: Colors[colorScheme].tint }]}>Rp {item.price}</ThemedText>
