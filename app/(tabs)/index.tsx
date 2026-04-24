@@ -1,98 +1,104 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from 'react';
+import { StyleSheet, View, FlatList, TouchableOpacity, TextInput } from 'react-native';
+import { useRouter } from 'expo-router';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
 
-export default function HomeScreen() {
+const DUMMY_KOST = [
+  { id: '1', name: 'Kost Melati', price: '1.200.000', city: 'Jakarta Selatan' },
+  { id: '2', name: 'Kost Mawar', price: '1.500.000', city: 'Jakarta Barat' },
+  { id: '3', name: 'Kost Anggrek', price: '900.000', city: 'Depok' },
+];
+
+export default function ExploreScreen() {
+  const router = useRouter();
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <ThemedView style={styles.container}>
+      <View style={styles.header}>
+        <ThemedText type="title">Cari Kost</ThemedText>
+        <TextInput 
+          style={styles.searchInput}
+          placeholder="Cari berdasarkan kota..."
+          placeholderTextColor="#888"
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <FlatList
+        data={DUMMY_KOST}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+        renderItem={({ item }) => (
+          <TouchableOpacity 
+            style={styles.card}
+            onPress={() => router.push(`/kost/${item.id}`)}
+          >
+            <View style={styles.imagePlaceholder}>
+              <ThemedText style={styles.imageText}>Gambar</ThemedText>
+            </View>
+            <View style={styles.cardInfo}>
+              <ThemedText type="defaultSemiBold">{item.name}</ThemedText>
+              <ThemedText style={styles.city}>{item.city}</ThemedText>
+              <ThemedText type="subtitle" style={styles.price}>Rp {item.price}/bln</ThemedText>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+  },
+  header: {
+    padding: 20,
+    paddingTop: 60,
+    backgroundColor: '#fff',
+    gap: 15,
+  },
+  searchInput: {
+    height: 45,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    fontSize: 16,
+  },
+  list: {
+    padding: 20,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 20,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  imagePlaceholder: {
+    height: 150,
+    backgroundColor: '#ddd',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  imageText: {
+    color: '#888',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  cardInfo: {
+    padding: 15,
+  },
+  city: {
+    color: '#666',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  price: {
+    marginTop: 8,
+    color: '#007AFF',
   },
 });

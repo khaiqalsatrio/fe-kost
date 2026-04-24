@@ -5,9 +5,11 @@ import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAuth } from '@/context/AuthContext';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { userRole } = useAuth();
 
   return (
     <Tabs
@@ -19,15 +21,40 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Explore',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          href: userRole === 'CUSTOMER' ? '/' : null,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="history"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'History',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="clock.fill" color={color} />,
+          href: userRole === 'CUSTOMER' ? '/history' : null,
+        }}
+      />
+      <Tabs.Screen
+        name="owner-dashboard"
+        options={{
+          title: 'Owner',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="list.bullet" color={color} />,
+          href: userRole === 'OWNER' ? '/owner-dashboard' : null,
+        }}
+      />
+      <Tabs.Screen
+        name="owner-incoming"
+        options={{
+          title: 'Incoming',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="bell.fill" color={color} />,
+          href: userRole === 'OWNER' ? '/owner-incoming' : null,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
         }}
       />
     </Tabs>
