@@ -1,54 +1,100 @@
 import React from 'react';
-import { StyleSheet, View, Image, ScrollView, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { StyleSheet, View, Image, ScrollView, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function KostDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const colorScheme = useColorScheme() ?? 'light';
+
+  // Using dummy data for demonstration
+  const DUMMY_IMAGE = id === '2' 
+    ? 'https://images.unsplash.com/photo-1502672260266-1c1de2d9d344?auto=format&fit=crop&q=80&w=1000'
+    : 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=1000';
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView>
-        <View style={styles.imagePlaceholder}>
-          <ThemedText style={styles.imageText}>Gambar Kost</ThemedText>
+      <Stack.Screen options={{ headerShown: false }} />
+      
+      <ScrollView bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+        <View style={styles.headerImageContainer}>
+          <Image source={{ uri: DUMMY_IMAGE }} style={[styles.headerImage, { width }]} />
+          <TouchableOpacity 
+            style={[styles.backButton, { top: Math.max(insets.top, 20) }]}
+            onPress={() => router.back()}
+          >
+            <IconSymbol name="chevron.left" size={24} color="#111" />
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.infoSection}>
-          <ThemedText type="title">Nama Kost {id}</ThemedText>
-          <ThemedText style={styles.location}>Jakarta Selatan, Indonesia</ThemedText>
-          
-          <View style={styles.priceContainer}>
-            <ThemedText type="subtitle">Rp 1.500.000</ThemedText>
-            <ThemedText style={styles.perMonth}>/ bulan</ThemedText>
+        <View style={[styles.contentContainer, { backgroundColor: Colors[colorScheme].background }]}>
+          <View style={styles.titleRow}>
+            <View style={{ flex: 1 }}>
+              <ThemedText type="title" style={styles.title}>Kost Exclusive {id}</ThemedText>
+              <View style={styles.locationContainer}>
+                <IconSymbol name="mappin.and.ellipse" size={16} color={Colors[colorScheme].icon} />
+                <ThemedText style={{ color: Colors[colorScheme].icon, fontSize: 16 }}>Jakarta Selatan, Indonesia</ThemedText>
+              </View>
+            </View>
+            <View style={[styles.ratingBadge, { backgroundColor: Colors[colorScheme].surface, borderColor: Colors[colorScheme].border }]}>
+              <IconSymbol name="star.fill" size={16} color="#F59E0B" />
+              <ThemedText style={styles.ratingText}>4.8</ThemedText>
+            </View>
           </View>
-
+          
           <View style={styles.divider} />
 
-          <ThemedText type="defaultSemiBold">Deskripsi</ThemedText>
-          <ThemedText style={styles.description}>
-            Kost nyaman dengan fasilitas lengkap. Strategis dekat perkantoran dan transportasi umum.
+          <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Deskripsi</ThemedText>
+          <ThemedText style={[styles.description, { color: Colors[colorScheme].icon }]}>
+            Kost eksklusif yang nyaman dengan fasilitas super lengkap. Sangat strategis, dekat dengan berbagai perkantoran di pusat kota dan akses transportasi umum yang mudah (MRT/TransJakarta). Lingkungan aman dengan keamanan 24 jam.
           </ThemedText>
 
           <View style={styles.divider} />
 
-          <ThemedText type="defaultSemiBold">Fasilitas</ThemedText>
+          <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Fasilitas</ThemedText>
           <View style={styles.facilities}>
-            <View style={styles.facilityBadge}><ThemedText>WiFi</ThemedText></View>
-            <View style={styles.facilityBadge}><ThemedText>AC</ThemedText></View>
-            <View style={styles.facilityBadge}><ThemedText>Km Dalam</ThemedText></View>
+            <View style={[styles.facilityItem, { backgroundColor: Colors[colorScheme].surface, borderColor: Colors[colorScheme].border }]}>
+              <IconSymbol name="wifi" size={24} color={Colors[colorScheme].tint} />
+              <ThemedText style={styles.facilityText}>WiFi Cepat</ThemedText>
+            </View>
+            <View style={[styles.facilityItem, { backgroundColor: Colors[colorScheme].surface, borderColor: Colors[colorScheme].border }]}>
+              <IconSymbol name="snowflake" size={24} color={Colors[colorScheme].tint} />
+              <ThemedText style={styles.facilityText}>AC</ThemedText>
+            </View>
+            <View style={[styles.facilityItem, { backgroundColor: Colors[colorScheme].surface, borderColor: Colors[colorScheme].border }]}>
+              <IconSymbol name="drop.fill" size={24} color={Colors[colorScheme].tint} />
+              <ThemedText style={styles.facilityText}>Km Dalam</ThemedText>
+            </View>
+            <View style={[styles.facilityItem, { backgroundColor: Colors[colorScheme].surface, borderColor: Colors[colorScheme].border }]}>
+              <IconSymbol name="bed.double.fill" size={24} color={Colors[colorScheme].tint} />
+              <ThemedText style={styles.facilityText}>Kasur</ThemedText>
+            </View>
           </View>
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { backgroundColor: Colors[colorScheme].surface, paddingBottom: Math.max(insets.bottom, 20) }]}>
+        <View style={styles.priceContainer}>
+          <ThemedText style={{ color: Colors[colorScheme].icon, fontSize: 14 }}>Harga</ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+            <ThemedText type="subtitle" style={[styles.priceAmount, { color: Colors[colorScheme].tint }]}>Rp 3.200.000</ThemedText>
+            <ThemedText style={[styles.priceMonth, { color: Colors[colorScheme].icon }]}> /bln</ThemedText>
+          </View>
+        </View>
         <TouchableOpacity 
-          style={styles.bookingButton}
+          style={[styles.bookingButton, { backgroundColor: Colors[colorScheme].tint }]}
           onPress={() => router.push(`/booking/${id}`)}
         >
-          <ThemedText style={styles.bookingButtonText}>Booking Sekarang</ThemedText>
+          <ThemedText style={styles.bookingButtonText}>Pesan Sekarang</ThemedText>
         </TouchableOpacity>
       </View>
     </ThemedView>
@@ -59,66 +105,130 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  imagePlaceholder: {
-    width: '100%',
-    height: 300,
-    backgroundColor: '#ddd',
+  headerImageContainer: {
+    position: 'relative',
+  },
+  headerImage: {
+    height: 350,
+    resizeMode: 'cover',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  imageText: {
-    color: '#888',
+  contentContainer: {
+    flex: 1,
+    marginTop: -30,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 24,
   },
-  infoSection: {
-    padding: 20,
-  },
-  location: {
-    color: '#666',
-    marginBottom: 10,
-  },
-  priceContainer: {
+  titleRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    marginVertical: 10,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
-  perMonth: {
-    marginLeft: 5,
-    color: '#666',
+  title: {
+    fontSize: 26,
+    marginBottom: 8,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  ratingText: {
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   divider: {
     height: 1,
-    backgroundColor: '#eee',
-    marginVertical: 15,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    marginBottom: 12,
   },
   description: {
-    marginTop: 5,
-    lineHeight: 20,
-    color: '#444',
+    fontSize: 15,
+    lineHeight: 24,
   },
   facilities: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 10,
+    gap: 12,
   },
-  facilityBadge: {
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+  facilityItem: {
+    width: '48%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  facilityText: {
+    fontWeight: '600',
   },
   footer: {
-    padding: 20,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
+    flexDirection: 'row',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 10,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  priceContainer: {
+    justifyContent: 'center',
+  },
+  priceAmount: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  priceMonth: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   bookingButton: {
-    backgroundColor: '#007AFF',
-    height: 50,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 16,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   bookingButtonText: {
     color: '#fff',

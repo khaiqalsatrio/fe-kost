@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { StyleSheet, View, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { useRouter, Stack } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function CreateKostScreen() {
   const router = useRouter();
+  const colorScheme = useColorScheme() ?? 'light';
+  const insets = useSafeAreaInsets();
+  
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -21,50 +28,91 @@ export default function CreateKostScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <ThemedText type="title" style={styles.title}>Tambah Kost Baru</ThemedText>
-        
-        <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder="Nama Kost"
-            value={formData.name}
-            onChangeText={(v) => setFormData({ ...formData, name: v })}
-          />
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Deskripsi"
-            multiline
-            numberOfLines={4}
-            value={formData.description}
-            onChangeText={(v) => setFormData({ ...formData, description: v })}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Alamat Lengkap"
-            value={formData.address}
-            onChangeText={(v) => setFormData({ ...formData, address: v })}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Kota"
-            value={formData.city}
-            onChangeText={(v) => setFormData({ ...formData, city: v })}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Harga per bulan (Rp)"
-            keyboardType="numeric"
-            value={formData.price}
-            onChangeText={(v) => setFormData({ ...formData, price: v })}
-          />
+    <ThemedView style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
+      <Stack.Screen options={{ headerShown: false }} />
+      
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20), backgroundColor: Colors[colorScheme].surface }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <IconSymbol name="chevron.left" size={24} color={Colors[colorScheme].text} />
+        </TouchableOpacity>
+        <ThemedText type="title" style={styles.headerTitle}>Tambah Kost</ThemedText>
+      </View>
 
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <ThemedText style={styles.submitButtonText}>Simpan Kost</ThemedText>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: Math.max(insets.bottom, 20) }]} showsVerticalScrollIndicator={false}>
+          
+          <ThemedText style={[styles.sectionDesc, { color: Colors[colorScheme].icon }]}>
+            Isi detail informasi properti kost Anda untuk mulai menarik penyewa.
+          </ThemedText>
+
+          <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.label}>Nama Kost</ThemedText>
+              <TextInput
+                style={[styles.input, { color: Colors[colorScheme].text, borderColor: Colors[colorScheme].border, backgroundColor: Colors[colorScheme].surface }]}
+                placeholder="Contoh: Kost Exclusive Melati"
+                placeholderTextColor={Colors[colorScheme].icon}
+                value={formData.name}
+                onChangeText={(v) => setFormData({ ...formData, name: v })}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.label}>Alamat Lengkap</ThemedText>
+              <TextInput
+                style={[styles.input, { color: Colors[colorScheme].text, borderColor: Colors[colorScheme].border, backgroundColor: Colors[colorScheme].surface }]}
+                placeholder="Jalan, Nomor, RT/RW..."
+                placeholderTextColor={Colors[colorScheme].icon}
+                value={formData.address}
+                onChangeText={(v) => setFormData({ ...formData, address: v })}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.label}>Kota</ThemedText>
+              <TextInput
+                style={[styles.input, { color: Colors[colorScheme].text, borderColor: Colors[colorScheme].border, backgroundColor: Colors[colorScheme].surface }]}
+                placeholder="Contoh: Jakarta Selatan"
+                placeholderTextColor={Colors[colorScheme].icon}
+                value={formData.city}
+                onChangeText={(v) => setFormData({ ...formData, city: v })}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.label}>Harga per Bulan (Rp)</ThemedText>
+              <TextInput
+                style={[styles.input, { color: Colors[colorScheme].text, borderColor: Colors[colorScheme].border, backgroundColor: Colors[colorScheme].surface }]}
+                placeholder="Contoh: 1500000"
+                placeholderTextColor={Colors[colorScheme].icon}
+                keyboardType="numeric"
+                value={formData.price}
+                onChangeText={(v) => setFormData({ ...formData, price: v })}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.label}>Deskripsi Singkat</ThemedText>
+              <TextInput
+                style={[styles.input, styles.textArea, { color: Colors[colorScheme].text, borderColor: Colors[colorScheme].border, backgroundColor: Colors[colorScheme].surface }]}
+                placeholder="Fasilitas, keunggulan lokal, dll."
+                placeholderTextColor={Colors[colorScheme].icon}
+                multiline
+                numberOfLines={4}
+                value={formData.description}
+                onChangeText={(v) => setFormData({ ...formData, description: v })}
+              />
+            </View>
+
+            <TouchableOpacity style={[styles.submitButton, { backgroundColor: Colors[colorScheme].tint }]} onPress={handleSubmit}>
+              <ThemedText style={styles.submitButtonText}>Simpan & Publikasikan</ThemedText>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }
@@ -73,39 +121,70 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scroll: {
-    padding: 20,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 3,
+    zIndex: 10,
   },
-  title: {
-    marginBottom: 20,
+  backButton: {
+    marginRight: 16,
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 24,
+  },
+  scroll: {
+    padding: 24,
+  },
+  sectionDesc: {
+    fontSize: 15,
+    marginBottom: 24,
+    lineHeight: 22,
   },
   form: {
-    gap: 15,
+    gap: 20,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   input: {
-    height: 50,
+    height: 56,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    backgroundColor: '#fff',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    fontSize: 16,
   },
   textArea: {
-    height: 100,
-    paddingTop: 15,
+    height: 120,
+    paddingTop: 16,
     textAlignVertical: 'top',
   },
   submitButton: {
-    backgroundColor: '#34C759',
-    height: 50,
-    borderRadius: 8,
+    height: 60,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   submitButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 18,
   },
 });
