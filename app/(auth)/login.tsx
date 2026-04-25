@@ -7,6 +7,8 @@ import { useAuth } from '@/context/AuthContext';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import api from '@/utils/api';
+import { ActivityIndicator } from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -16,12 +18,31 @@ export default function LoginScreen() {
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'CUSTOMER' | 'OWNER'>('CUSTOMER');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
-    console.log('Login attempt:', email, 'as', role);
-    login(role);
-    router.replace('/(tabs)');
+  const handleLogin = async () => {
+    if (!email || !password) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await api.post('/auth/login', {
+        email,
+        password,
+      });
+
+      const { accessToken } = response.data;
+      await login(accessToken);
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      const message = error.response?.data?.message || 'Login failed. Please check your credentials.';
+      alert(Array.isArray(message) ? message.join('\n') : message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -51,29 +72,6 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.form}>
-              <ThemedText style={styles.label}>Login sebagai:</ThemedText>
-              <View style={styles.roleButtons}>
-                <TouchableOpacity
-                  style={[
-                    styles.roleButton,
-                    role === 'CUSTOMER' ? { borderColor: Colors[colorScheme].tint, backgroundColor: isDark ? 'rgba(79, 70, 229, 0.2)' : '#EEF2FF' } : { borderColor: Colors[colorScheme].border, backgroundColor: Colors[colorScheme].surface }
-                  ]}
-                  onPress={() => setRole('CUSTOMER')}
-                >
-                  <IconSymbol name="person.fill" size={24} color={role === 'CUSTOMER' ? Colors[colorScheme].tint : Colors[colorScheme].icon} />
-                  <ThemedText style={[styles.roleText, { color: role === 'CUSTOMER' ? Colors[colorScheme].tint : Colors[colorScheme].icon }]}>Pencari</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.roleButton,
-                    role === 'OWNER' ? { borderColor: Colors[colorScheme].tint, backgroundColor: isDark ? 'rgba(79, 70, 229, 0.2)' : '#EEF2FF' } : { borderColor: Colors[colorScheme].border, backgroundColor: Colors[colorScheme].surface }
-                  ]}
-                  onPress={() => setRole('OWNER')}
-                >
-                  <IconSymbol name="house.fill" size={24} color={role === 'OWNER' ? Colors[colorScheme].tint : Colors[colorScheme].icon} />
-                  <ThemedText style={[styles.roleText, { color: role === 'OWNER' ? Colors[colorScheme].tint : Colors[colorScheme].icon }]}>Pemilik</ThemedText>
-                </TouchableOpacity>
-              </View>
 
               <View style={styles.inputGroup}>
                 <View style={styles.inputContainer}>
@@ -102,8 +100,16 @@ export default function LoginScreen() {
                 </View>
               </View>
 
-              <TouchableOpacity style={[styles.button, { backgroundColor: Colors[colorScheme].tint }]} onPress={handleLogin}>
-                <ThemedText style={styles.buttonText}>Login</ThemedText>
+              <TouchableOpacity 
+                style={[styles.button, { backgroundColor: Colors[colorScheme].tint, opacity: isLoading ? 0.7 : 1 }]} 
+                onPress={handleLogin}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <ThemedText style={styles.buttonText}>Login</ThemedText>
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.link} onPress={() => router.push('/(auth)/register')}>

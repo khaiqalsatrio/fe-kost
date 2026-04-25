@@ -8,6 +8,8 @@ import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import api from '@/utils/api';
+import { ActivityIndicator } from 'react-native';
 
 export default function CreateKostScreen() {
   const router = useRouter();
@@ -21,10 +23,34 @@ export default function CreateKostScreen() {
     city: '',
     price: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = () => {
-    console.log('Creating kost:', formData);
-    router.back();
+  const handleSubmit = async () => {
+    if (!formData.name || !formData.address || !formData.city || !formData.price) {
+      alert('Mohon isi semua field wajib');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await api.post('/kost', {
+        name: formData.name,
+        description: formData.description,
+        address: formData.address,
+        city: formData.city,
+        price_per_month: Number(formData.price),
+        facilities: ['WiFi', 'Kasur'], // Default facilities placeholder
+        images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=1000'],
+      });
+      alert('Kost berhasil dipublikasikan!');
+      router.back();
+    } catch (error: any) {
+      console.error('Error creating kost:', error);
+      const message = error.response?.data?.message || 'Gagal membuat kost. Silakan coba lagi.';
+      alert(Array.isArray(message) ? message.join('\n') : message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -107,8 +133,16 @@ export default function CreateKostScreen() {
               />
             </View>
 
-            <TouchableOpacity style={[styles.submitButton, { backgroundColor: Colors[colorScheme].tint }]} onPress={handleSubmit}>
-              <ThemedText style={styles.submitButtonText}>Simpan & Publikasikan</ThemedText>
+            <TouchableOpacity 
+              style={[styles.submitButton, { backgroundColor: Colors[colorScheme].tint, opacity: isLoading ? 0.7 : 1 }]} 
+              onPress={handleSubmit}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <ThemedText style={styles.submitButtonText}>Simpan & Publikasikan</ThemedText>
+              )}
             </TouchableOpacity>
           </View>
         </ScrollView>

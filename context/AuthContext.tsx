@@ -1,28 +1,70 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '@/utils/api';
 
 type Role = 'CUSTOMER' | 'OWNER' | null;
 
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: Role;
+}
+
 interface AuthContextType {
-  userRole: Role;
-  login: (role: Role) => void;
-  logout: () => void;
+  user: User | null;
+  isLoading: boolean;
+  login: (token: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [userRole, setUserRole] = useState<Role>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = (role: Role) => {
-    setUserRole(role);
+  useEffect(() => {
+    checkLoginStatus();
+  }, []);
+
+  const checkLoginStatus = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (token) {
+        const response = await api.get('/auth/me');
+        setUser(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to restore session:', error);
+      await AsyncStorage.removeItem('userToken');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const logout = () => {
-    setUserRole(null);
+  const login = async (token: string) => {
+    try {
+      await AsyncStorage.setItem('userToken', token);
+      const response = await api.get('/auth/me');
+      setUser(response.data);
+    } catch (error) {
+      console.error('Login error in context:', error);
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await AsyncStorage.removeItem('userToken');
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ userRole, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, View, Image, ScrollView, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, Image, ScrollView, TouchableOpacity, useWindowDimensions, Platform, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,26 +8,58 @@ import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import api from '@/utils/api';
+
+import { useAuth } from '@/context/AuthContext';
 
 export default function KostDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { user } = useAuth();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme() ?? 'light';
 
-  // Using dummy data for demonstration
-  const DUMMY_IMAGE = id === '2' 
-    ? 'https://images.unsplash.com/photo-1502672260266-1c1de2d9d344?auto=format&fit=crop&q=80&w=1000'
-    : 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=1000';
+  const [kost, setKost] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchDetail = async () => {
+    try {
+      const response = await api.get(`/kost/${id}`);
+      setKost(response.data);
+    } catch (error) {
+      console.error('Error fetching Detail:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDetail();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <ThemedView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors[colorScheme].tint} />
+      </ThemedView>
+    );
+  }
+
+  if (!kost) return null;
+
+  const isCustomer = user?.role === 'CUSTOMER';
 
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
-      <ScrollView bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: isCustomer ? 100 : 20 }}>
         <View style={styles.headerImageContainer}>
-          <Image source={{ uri: DUMMY_IMAGE }} style={[styles.headerImage, { width }]} />
+          <Image 
+            source={{ uri: kost.images?.[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=1000' }} 
+            style={[styles.headerImage, { width }]} 
+          />
           <TouchableOpacity 
             style={[styles.backButton, { top: Math.max(insets.top, 20) }]}
             onPress={() => router.back()}
@@ -39,10 +71,10 @@ export default function KostDetailScreen() {
         <View style={[styles.contentContainer, { backgroundColor: Colors[colorScheme].background }]}>
           <View style={styles.titleRow}>
             <View style={{ flex: 1 }}>
-              <ThemedText type="title" style={styles.title}>Kost Exclusive {id}</ThemedText>
+              <ThemedText type="title" style={styles.title}>{kost.name}</ThemedText>
               <View style={styles.locationContainer}>
                 <IconSymbol name="mappin.and.ellipse" size={16} color={Colors[colorScheme].icon} />
-                <ThemedText style={{ color: Colors[colorScheme].icon, fontSize: 16 }}>Jakarta Selatan, Indonesia</ThemedText>
+                <ThemedText style={{ color: Colors[colorScheme].icon, fontSize: 16 }}>{kost.city}, Indonesia</ThemedText>
               </View>
             </View>
             <View style={[styles.ratingBadge, { backgroundColor: Colors[colorScheme].surface, borderColor: Colors[colorScheme].border }]}>
@@ -53,50 +85,49 @@ export default function KostDetailScreen() {
           
           <View style={styles.divider} />
 
+          <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Alamat</ThemedText>
+          <ThemedText style={[styles.description, { color: Colors[colorScheme].icon, marginBottom: 16 }]}>
+            {kost.address}
+          </ThemedText>
+
           <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Deskripsi</ThemedText>
           <ThemedText style={[styles.description, { color: Colors[colorScheme].icon }]}>
-            Kost eksklusif yang nyaman dengan fasilitas super lengkap. Sangat strategis, dekat dengan berbagai perkantoran di pusat kota dan akses transportasi umum yang mudah (MRT/TransJakarta). Lingkungan aman dengan keamanan 24 jam.
+            {kost.description}
           </ThemedText>
 
           <View style={styles.divider} />
 
           <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>Fasilitas</ThemedText>
           <View style={styles.facilities}>
-            <View style={[styles.facilityItem, { backgroundColor: Colors[colorScheme].surface, borderColor: Colors[colorScheme].border }]}>
-              <IconSymbol name="wifi" size={24} color={Colors[colorScheme].tint} />
-              <ThemedText style={styles.facilityText}>WiFi Cepat</ThemedText>
-            </View>
-            <View style={[styles.facilityItem, { backgroundColor: Colors[colorScheme].surface, borderColor: Colors[colorScheme].border }]}>
-              <IconSymbol name="snowflake" size={24} color={Colors[colorScheme].tint} />
-              <ThemedText style={styles.facilityText}>AC</ThemedText>
-            </View>
-            <View style={[styles.facilityItem, { backgroundColor: Colors[colorScheme].surface, borderColor: Colors[colorScheme].border }]}>
-              <IconSymbol name="drop.fill" size={24} color={Colors[colorScheme].tint} />
-              <ThemedText style={styles.facilityText}>Km Dalam</ThemedText>
-            </View>
-            <View style={[styles.facilityItem, { backgroundColor: Colors[colorScheme].surface, borderColor: Colors[colorScheme].border }]}>
-              <IconSymbol name="bed.double.fill" size={24} color={Colors[colorScheme].tint} />
-              <ThemedText style={styles.facilityText}>Kasur</ThemedText>
-            </View>
+            {kost.facilities?.map((fac: string, idx: number) => (
+              <View key={idx} style={[styles.facilityItem, { backgroundColor: Colors[colorScheme].surface, borderColor: Colors[colorScheme].border }]}>
+                <IconSymbol name="checkmark.circle.fill" size={20} color={Colors[colorScheme].tint} />
+                <ThemedText style={styles.facilityText}>{fac}</ThemedText>
+              </View>
+            ))}
           </View>
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { backgroundColor: Colors[colorScheme].surface, paddingBottom: Math.max(insets.bottom, 20) }]}>
-        <View style={styles.priceContainer}>
-          <ThemedText style={{ color: Colors[colorScheme].icon, fontSize: 14 }}>Harga</ThemedText>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-            <ThemedText type="subtitle" style={[styles.priceAmount, { color: Colors[colorScheme].tint }]}>Rp 3.200.000</ThemedText>
-            <ThemedText style={[styles.priceMonth, { color: Colors[colorScheme].icon }]}> /bln</ThemedText>
+      {isCustomer && (
+        <View style={[styles.footer, { backgroundColor: Colors[colorScheme].surface, paddingBottom: Math.max(insets.bottom, 20) }]}>
+          <View style={styles.priceContainer}>
+            <ThemedText style={{ color: Colors[colorScheme].icon, fontSize: 14 }}>Harga</ThemedText>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+              <ThemedText type="subtitle" style={[styles.priceAmount, { color: Colors[colorScheme].tint }]}>
+                Rp {kost.price_per_month?.toLocaleString('id-ID')}
+              </ThemedText>
+              <ThemedText style={[styles.priceMonth, { color: Colors[colorScheme].icon }]}> /bln</ThemedText>
+            </View>
           </View>
+          <TouchableOpacity 
+            style={[styles.bookingButton, { backgroundColor: Colors[colorScheme].tint }]}
+            onPress={() => router.push(`/booking/${id}`)}
+          >
+            <ThemedText style={styles.bookingButtonText}>Pesan Sekarang</ThemedText>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity 
-          style={[styles.bookingButton, { backgroundColor: Colors[colorScheme].tint }]}
-          onPress={() => router.push(`/booking/${id}`)}
-        >
-          <ThemedText style={styles.bookingButtonText}>Pesan Sekarang</ThemedText>
-        </TouchableOpacity>
-      </View>
+      )}
     </ThemedView>
   );
 }

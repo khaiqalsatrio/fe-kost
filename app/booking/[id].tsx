@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,6 +8,7 @@ import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import api from '@/utils/api';
 
 export default function BookingFormScreen() {
   const { id } = useLocalSearchParams();
@@ -15,17 +16,60 @@ export default function BookingFormScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const insets = useSafeAreaInsets();
   
+  const [kost, setKost] = useState<any>(null);
   const [startDate, setStartDate] = useState('');
   const [duration, setDuration] = useState('1');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const basePrice = 1500000;
+  useEffect(() => {
+    const fetchKost = async () => {
+      try {
+        const response = await api.get(`/kost/${id}`);
+        setKost(response.data);
+      } catch (error) {
+        console.error('Error fetching kost info:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchKost();
+  }, [id]);
+
   const numDur = parseInt(duration) || 1;
-  const totalPrice = basePrice * numDur;
+  const totalPrice = (kost?.price_per_month || 0) * numDur;
 
-  const handleBooking = () => {
-    console.log('Booking request:', { id, startDate, duration });
-    router.replace('/(tabs)/history');
+  const handleBooking = async () => {
+    if (!startDate || !duration) {
+      Alert.alert('Error', 'Mohon isi semua field.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await api.post('/booking', {
+        kostId: id,
+        startDate,
+        durationMonths: numDur,
+      });
+      Alert.alert('Berhasil', 'Booking Anda telah diajukan!');
+      router.replace('/(tabs)/history');
+    } catch (error: any) {
+      console.error('Booking error:', error);
+      const message = error.response?.data?.message || 'Gagal membuat booking.';
+      Alert.alert('Error', Array.isArray(message) ? message.join('\n') : message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <ThemedView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors[colorScheme].tint} />
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
@@ -46,7 +90,7 @@ export default function BookingFormScreen() {
           <View style={[styles.infoCard, { backgroundColor: Colors[colorScheme].tint + '10', borderColor: Colors[colorScheme].tint }]}>
              <IconSymbol name="info.circle.fill" size={24} color={Colors[colorScheme].tint} />
              <View style={{ flex: 1 }}>
-               <ThemedText style={{ fontWeight: '600' }}>Kost Exclusive {id}</ThemedText>
+               <ThemedText style={{ fontWeight: '600' }}>{kost?.name}</ThemedText>
                <ThemedText style={{ fontSize: 13, color: Colors[colorScheme].icon }}>Pastikan data sewa yang Anda masukkan sudah benar.</ThemedText>
              </View>
           </View>
@@ -87,7 +131,7 @@ export default function BookingFormScreen() {
             
             <View style={styles.summaryRow}>
               <ThemedText style={{ color: Colors[colorScheme].icon }}>Harga Satuan</ThemedText>
-              <ThemedText style={{ fontWeight: '500' }}>Rp 1.500.000</ThemedText>
+              <ThemedText style={{ fontWeight: '500' }}>Rp {kost?.price_per_month?.toLocaleString('id-ID')}</ThemedText>
             </View>
             
             <View style={styles.summaryRow}>
@@ -105,8 +149,16 @@ export default function BookingFormScreen() {
             </View>
           </View>
 
-          <TouchableOpacity style={[styles.button, { backgroundColor: Colors[colorScheme].tint }]} onPress={handleBooking}>
-            <ThemedText style={styles.buttonText}>Konfirmasi & Pesan Kost</ThemedText>
+          <TouchableOpacity 
+            style={[styles.button, { backgroundColor: Colors[colorScheme].tint, opacity: isSubmitting ? 0.7 : 1 }]} 
+            onPress={handleBooking}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <ThemedText style={styles.buttonText}>Konfirmasi & Pesan Kost</ThemedText>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -6,6 +6,8 @@ import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import api from '@/utils/api';
+import { ActivityIndicator } from 'react-native';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -16,10 +18,31 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'CUSTOMER' | 'OWNER'>('CUSTOMER');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleRegister = () => {
-    console.log('Register attempt:', { name, email, role });
-    router.replace('/(auth)/login');
+  const handleRegister = async () => {
+    if (!name || !email || !password) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await api.post('/auth/register', {
+        name,
+        email,
+        password,
+        role,
+      });
+      alert('Registration successful! Please login.');
+      router.replace('/(auth)/login');
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      const message = error.response?.data?.message || 'Registration failed. Please try again.';
+      alert(Array.isArray(message) ? message.join('\n') : message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -111,8 +134,16 @@ export default function RegisterScreen() {
                 </View>
               </View>
 
-              <TouchableOpacity style={[styles.button, { backgroundColor: Colors[colorScheme].tint }]} onPress={handleRegister}>
-                <ThemedText style={styles.buttonText}>Register</ThemedText>
+              <TouchableOpacity 
+                style={[styles.button, { backgroundColor: Colors[colorScheme].tint, opacity: isLoading ? 0.7 : 1 }]} 
+                onPress={handleRegister}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <ThemedText style={styles.buttonText}>Register</ThemedText>
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.link} onPress={() => router.back()}>

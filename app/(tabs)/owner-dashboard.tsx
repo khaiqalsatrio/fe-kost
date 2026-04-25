@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Image, ScrollView, StyleSheet, TouchableOpacity, View, RefreshControl, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -8,11 +8,37 @@ import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import api from '@/utils/api';
 
 export default function OwnerDashboard() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
   const insets = useSafeAreaInsets();
+
+  const [myKosts, setMyKosts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchMyKosts = async () => {
+    try {
+      const response = await api.get('/kost/my');
+      setMyKosts(response.data);
+    } catch (error) {
+      console.error('Error fetching my kosts:', error);
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyKosts();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchMyKosts();
+  };
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
@@ -35,13 +61,19 @@ export default function OwnerDashboard() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { backgroundColor: Colors[colorScheme].surface, shadowColor: Colors[colorScheme].tint }]}>
             <View style={[styles.statIconContainer, { backgroundColor: Colors[colorScheme].tint + '15' }]}>
               <IconSymbol name="house.fill" size={24} color={Colors[colorScheme].tint} />
             </View>
-            <ThemedText type="title" style={{ fontSize: 28 }}>0</ThemedText>
+            <ThemedText type="title" style={{ fontSize: 28 }}>{myKosts.length}</ThemedText>
             <ThemedText style={{ color: Colors[colorScheme].icon, marginTop: 4 }}>Total Kost</ThemedText>
           </View>
 
@@ -55,21 +87,55 @@ export default function OwnerDashboard() {
         </View>
 
         <ThemedText type="subtitle" style={styles.sectionTitle}>Kost Saya</ThemedText>
-        <View style={[styles.emptyState, { backgroundColor: Colors[colorScheme].surface, borderColor: Colors[colorScheme].border }]}>
-          <View style={[styles.emptyIconCircle, { backgroundColor: Colors[colorScheme].border }]}>
-            <IconSymbol name="house.lodge" size={40} color={Colors[colorScheme].icon} />
+        
+        {isLoading && !refreshing ? (
+          <ActivityIndicator size="large" color={Colors[colorScheme].tint} style={{ marginTop: 20 }} />
+        ) : myKosts.length > 0 ? (
+          <View style={{ gap: 16 }}>
+            {myKosts.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.kostItem, { backgroundColor: Colors[colorScheme].surface, borderColor: Colors[colorScheme].border }]}
+                onPress={() => router.push(`/kost/${item.id}`)}
+              >
+                <Image 
+                  source={{ uri: item.images?.[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=200' }} 
+                  style={styles.kostItemImage} 
+                />
+                <View style={{ flex: 1, padding: 12 }}>
+                  <ThemedText type="defaultSemiBold" numberOfLines={1}>{item.name}</ThemedText>
+                  <ThemedText style={{ color: Colors[colorScheme].icon, fontSize: 13 }}>{item.city}</ThemedText>
+                  <ThemedText style={{ color: Colors[colorScheme].tint, fontWeight: '700', marginTop: 4 }}>
+                    Rp {item.price_per_month?.toLocaleString('id-ID')}
+                  </ThemedText>
+                </View>
+                <IconSymbol name="chevron.right" size={20} color={Colors[colorScheme].icon} style={{ marginRight: 12 }} />
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={[styles.addButtonSticky, { backgroundColor: Colors[colorScheme].tint }]}
+              onPress={() => router.push('/kost/create')}
+            >
+              <ThemedText style={{ color: '#fff', fontWeight: 'bold' }}>+ Tambah Kost Lagi</ThemedText>
+            </TouchableOpacity>
           </View>
-          <ThemedText type="defaultSemiBold" style={{ marginBottom: 4 }}>Belum ada kost didaftarkan</ThemedText>
-          <ThemedText style={{ color: Colors[colorScheme].icon, textAlign: 'center', marginBottom: 16 }}>
-            Mulai daftarkan properti Anda dan dapatkan penyewa pertama hari ini.
-          </ThemedText>
-          <TouchableOpacity
-            style={[styles.emptyButton, { backgroundColor: Colors[colorScheme].tint + '15' }]}
-            onPress={() => router.push('/kost/create')}
-          >
-            <ThemedText style={{ color: Colors[colorScheme].tint, fontWeight: '700' }}>+ Buat Listing Kost</ThemedText>
-          </TouchableOpacity>
-        </View>
+        ) : (
+          <View style={[styles.emptyState, { backgroundColor: Colors[colorScheme].surface, borderColor: Colors[colorScheme].border }]}>
+            <View style={[styles.emptyIconCircle, { backgroundColor: Colors[colorScheme].border }]}>
+              <IconSymbol name="house.lodge" size={40} color={Colors[colorScheme].icon} />
+            </View>
+            <ThemedText type="defaultSemiBold" style={{ marginBottom: 4 }}>Belum ada kost didaftarkan</ThemedText>
+            <ThemedText style={{ color: Colors[colorScheme].icon, textAlign: 'center', marginBottom: 16 }}>
+              Mulai daftarkan properti Anda dan dapatkan penyewa pertama hari ini.
+            </ThemedText>
+            <TouchableOpacity
+              style={[styles.emptyButton, { backgroundColor: Colors[colorScheme].tint + '15' }]}
+              onPress={() => router.push('/kost/create')}
+            >
+              <ThemedText style={{ color: Colors[colorScheme].tint, fontWeight: '700' }}>+ Buat Listing Kost</ThemedText>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </ThemedView>
   );
@@ -163,5 +229,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
+  },
+  kostItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  kostItemImage: {
+    width: 100,
+    height: 100,
+  },
+  addButtonSticky: {
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
 });

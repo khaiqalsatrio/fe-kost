@@ -9,7 +9,8 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const { userRole } = useAuth();
+  const { user } = useAuth();
+  const role = user?.role;
 
   return (
     <Tabs
@@ -31,7 +32,7 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-          href: userRole === 'CUSTOMER' ? '/' : null,
+          href: role === 'CUSTOMER' ? '/' : null,
         }}
       />
       <Tabs.Screen
@@ -39,15 +40,15 @@ export default function TabLayout() {
         options={{
           title: 'History',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="clock.fill" color={color} />,
-          href: userRole === 'CUSTOMER' ? '/history' : null,
+          href: role === 'CUSTOMER' ? '/history' : null,
         }}
       />
       <Tabs.Screen
         name="owner-dashboard"
         options={{
-          title: 'Owner',
+          title: 'Dashboard',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="list.bullet" color={color} />,
-          href: userRole === 'OWNER' ? '/owner-dashboard' : null,
+          href: role === 'OWNER' ? '/owner-dashboard' : null,
         }}
       />
       <Tabs.Screen
@@ -55,7 +56,7 @@ export default function TabLayout() {
         options={{
           title: 'Incoming',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="bell.fill" color={color} />,
-          href: userRole === 'OWNER' ? '/owner-incoming' : null,
+          href: role === 'OWNER' ? '/owner-incoming' : null,
         }}
       />
       <Tabs.Screen

@@ -10,16 +10,25 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuth } from '@/context/AuthContext';
 
+import { useTheme } from '@/context/ThemeContext';
+
 export default function ProfileScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
   const insets = useSafeAreaInsets();
-  const { userRole, logout } = useAuth(); // Assume logout exists if auth is managed
+  const { user, logout } = useAuth();
+  const { mode, setMode } = useTheme();
 
   const handleLogout = () => {
-    if(logout) logout();
+    logout();
     router.replace('/(auth)/login');
   };
+
+  const toggleTheme = () => {
+    setMode(mode === 'light' ? 'dark' : 'light');
+  };
+
+  const nameInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
@@ -30,13 +39,13 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={[styles.profileCard, { backgroundColor: Colors[colorScheme].surface, shadowColor: Colors[colorScheme].tint }]}>
           <View style={[styles.avatarPlaceholder, { backgroundColor: Colors[colorScheme].tint }]}>
-            <ThemedText style={styles.avatarText}>ID</ThemedText>
+            <ThemedText style={styles.avatarText}>{nameInitial}</ThemedText>
           </View>
           <View style={styles.profileInfo}>
-            <ThemedText type="subtitle" style={styles.nameText}>Irfan Doe</ThemedText>
-            <ThemedText style={{ color: Colors[colorScheme].icon }}>irfan.doe@example.com</ThemedText>
+            <ThemedText type="subtitle" style={styles.nameText}>{user?.name || 'User'}</ThemedText>
+            <ThemedText style={{ color: Colors[colorScheme].icon }}>{user?.email || 'email@example.com'}</ThemedText>
             <View style={[styles.badge, { backgroundColor: Colors[colorScheme].tint + '20' }]}>
-              <ThemedText style={[styles.badgeText, { color: Colors[colorScheme].tint }]}>{userRole || 'PENGGUNA'}</ThemedText>
+              <ThemedText style={[styles.badgeText, { color: Colors[colorScheme].tint }]}>{user?.role || 'PENGGUNA'}</ThemedText>
             </View>
           </View>
         </View>
@@ -51,6 +60,19 @@ export default function ProfileScreen() {
             <IconSymbol name="chevron.right" size={16} color={Colors[colorScheme].icon} />
           </TouchableOpacity>
           
+          <TouchableOpacity 
+            style={[styles.menuItem, { borderBottomColor: Colors[colorScheme].border }]}
+            onPress={toggleTheme}
+          >
+            <View style={[styles.menuIconContainer, { backgroundColor: Colors[colorScheme].tint + '15' }]}>
+              <IconSymbol name={mode === 'dark' ? 'moon.fill' : 'sun.max.fill'} size={20} color={Colors[colorScheme].tint} />
+            </View>
+            <ThemedText style={styles.menuText}>Dark Mode</ThemedText>
+            <View style={[styles.switchTrack, { backgroundColor: mode === 'dark' ? Colors[colorScheme].tint : Colors[colorScheme].icon + '30' }]}>
+              <View style={[styles.switchThumb, { marginLeft: mode === 'dark' ? 20 : 2 }]} />
+            </View>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.menuItem}>
             <View style={[styles.menuIconContainer, { backgroundColor: Colors[colorScheme].tint + '15' }]}>
                <IconSymbol name="gear" size={20} color={Colors[colorScheme].tint} />
@@ -178,5 +200,18 @@ const styles = StyleSheet.create({
   logoutText: {
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  switchTrack: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  switchThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#fff',
   },
 });
