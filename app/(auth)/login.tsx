@@ -1,21 +1,20 @@
-import React, { useState } from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, View, Image, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useAuth } from '@/context/AuthContext';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
+import { useAuth } from '@/context/AuthContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import api from '@/utils/api';
-import { ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
   const colorScheme = useColorScheme() ?? 'light';
   const isDark = colorScheme === 'dark';
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -47,27 +46,27 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Image 
-        source={{ uri: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=1000' }} 
-        style={styles.headerImage} 
+      <Image
+        source={{ uri: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=1000' }}
+        style={styles.headerImage}
       />
       <View style={[styles.overlay, isDark ? { backgroundColor: 'rgba(0,0,0,0.6)' } : { backgroundColor: 'rgba(0,0,0,0.2)' }]} />
-      
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
+
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.scrollContainer} bounces={false} showsVerticalScrollIndicator={false}>
           <View style={styles.spacer} />
-          
+
           <ThemedView style={[styles.formContainer, { backgroundColor: Colors[colorScheme].background }]}>
             <View style={styles.header}>
-              <Image 
-                source={require('@/assets/images/logo_kost.jpg')} 
-                style={styles.logo} 
-                resizeMode="contain" 
+              <Image
+                source={require('@/assets/images/logo_kost.jpg')}
+                style={styles.logo}
+                resizeMode="contain"
               />
-              <ThemedText type="title" style={styles.title}>Welcome Back</ThemedText>
+              <ThemedText type="title" style={styles.title}>Kost Aja</ThemedText>
               <ThemedText style={{ color: Colors[colorScheme].icon }}>Login to your account to continue</ThemedText>
             </View>
 
@@ -86,7 +85,7 @@ export default function LoginScreen() {
                     keyboardType="email-address"
                   />
                 </View>
-                
+
                 <View style={styles.inputContainer}>
                   <IconSymbol name="lock.fill" size={20} color={Colors[colorScheme].icon} style={styles.inputIcon} />
                   <TextInput
@@ -100,8 +99,8 @@ export default function LoginScreen() {
                 </View>
               </View>
 
-              <TouchableOpacity 
-                style={[styles.button, { backgroundColor: Colors[colorScheme].tint, opacity: isLoading ? 0.7 : 1 }]} 
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: Colors[colorScheme].tint, opacity: isLoading ? 0.7 : 1 }]}
                 onPress={handleLogin}
                 disabled={isLoading}
               >

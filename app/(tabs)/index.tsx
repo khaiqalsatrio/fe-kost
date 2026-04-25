@@ -1,15 +1,15 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { FlatList, Image, StyleSheet, TextInput, TouchableOpacity, View, ActivityIndicator, RefreshControl } from 'react-native';
+import { ActivityIndicator, FlatList, Image, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
+import { useAuth } from '@/context/AuthContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import api from '@/utils/api';
-import { useAuth } from '@/context/AuthContext';
 
 export default function ExploreScreen() {
   const router = useRouter();
@@ -22,7 +22,7 @@ export default function ExploreScreen() {
       router.replace('/owner-dashboard');
     }
   }, [user]);
-  
+
   const [kosts, setKosts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -65,7 +65,7 @@ export default function ExploreScreen() {
               />
             </View>
             <View style={{ justifyContent: 'center' }}>
-              <ThemedText type="title" style={{ fontSize: 24, lineHeight: 28, fontWeight: '800' }}>Sewa Kost</ThemedText>
+              <ThemedText type="title" style={{ fontSize: 24, lineHeight: 28, fontWeight: '800' }}>Kost Aja</ThemedText>
             </View>
           </View>
           <View style={[styles.avatar, { backgroundColor: Colors[colorScheme].tint + '20' }]}>
@@ -102,9 +102,9 @@ export default function ExploreScreen() {
               onPress={() => router.push(`/kost/${item.id}`)}
               activeOpacity={0.8}
             >
-              <Image 
-                source={{ uri: item.images?.[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=500' }} 
-                style={styles.cardImage} 
+              <Image
+                source={{ uri: item.images?.[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=500' }}
+                style={styles.cardImage}
               />
               <View style={styles.cardContent}>
                 <View style={styles.cardHeader}>
