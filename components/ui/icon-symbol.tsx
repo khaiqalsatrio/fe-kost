@@ -22,6 +22,23 @@ const MAPPING = {
   'person.fill': 'person',
   'list.bullet': 'list',
   'bell.fill': 'notifications',
+  // New Modern Icons
+  'safari.fill': 'explore',
+  'clock.arrow.2.circlepath': 'update',
+  'text.bubble.fill': 'chat',
+  'bubble.left.and.bubble.right.fill': 'forum',
+  'square.grid.2x2.fill': 'dashboard',
+  'bell.badge.fill': 'notification-important',
+  'person.crop.circle.fill': 'account-circle',
+  'magnifyingglass': 'search',
+  'plus': 'add',
+  'pencil': 'edit',
+  'trash.fill': 'delete',
+  'checkmark': 'check',
+  'checkmark.circle.fill': 'check-circle',
+  'checkmark.seal.fill': 'verified',
+  'bed.double.fill': 'hotel',
+  'person.2.fill': 'people',
 } as IconMapping;
 
 /**

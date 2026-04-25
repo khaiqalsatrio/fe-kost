@@ -43,36 +43,23 @@ Sebagian besar endpoint memerlukan token otorisasi. Token didapatkan melalui end
 }
 ```
 
-**Response Success (201 Created):**
-```json
-{
-  "id": "uuid-string",
-  "email": "user@example.com",
-  "name": "Budi Santoso",
-  "role": "CUSTOMER",
-  "createdAt": "2024-05-01T00:00:00Z",
-  "updatedAt": "2024-05-01T00:00:00Z"
-}
-```
-
 ### 1.2 Login User
 - **Method:** `POST`
 - **Endpoint:** `/auth/login`
 - **Akses:** Public
-- **Deskripsi:** Mengautentikasi kredensial pengguna dan mengembalikan JWT Access Token.
+- **Deskripsi:** Mengautentikasi kredensial pengguna dan mengembalikan JWT Access Token serta status onboarding (`hasKost`).
 
-**Request Body:**
+**Response Success (200 OK):**
 ```json
 {
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-**Response Success (201 / 200 OK):**
-```json
-{
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR..."
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR...",
+  "user": {
+    "id": "uuid-string",
+    "email": "user@example.com",
+    "name": "Budi Santoso",
+    "role": "OWNER",
+    "hasKost": false // PENTING: Jika false, arahkan OWNER ke layar Onboarding Kost
+  }
 }
 ```
 
@@ -80,7 +67,7 @@ Sebagian besar endpoint memerlukan token otorisasi. Token didapatkan melalui end
 - **Method:** `GET`
 - **Endpoint:** `/auth/me`
 - **Akses:** Private (Header Authorization Wajib)
-- **Deskripsi:** Mendapatkan informasi profile user yang sedang login.
+- **Deskripsi:** Mendapatkan informasi profile user yang sedang login beserta status kepemilikan kost.
 
 **Response Success:**
 ```json
@@ -88,8 +75,8 @@ Sebagian besar endpoint memerlukan token otorisasi. Token didapatkan melalui end
   "id": "uuid-string",
   "email": "user@example.com",
   "name": "Budi Santoso",
-  "role": "CUSTOMER"
-  // dll
+  "role": "OWNER",
+  "hasKost": true
 }
 ```
 
@@ -103,145 +90,136 @@ Sebagian besar endpoint memerlukan token otorisasi. Token didapatkan melalui end
 - **Akses:** Public
 - **Deskripsi:** Menampilkan daftar semua kost. Mendukung *filtering* via query params (`?city=xxx&maxPrice=5000000`).
 
-**Response Success:**
-```json
-[
-  {
-    "id": "uuid-kost-1",
-    "name": "Kost Ceria",
-    "description": "Kost nyaman dan strategis dekat kampus",
-    "address": "Jl. Merdeka No. 10",
-    "city": "Jakarta",
-    "price_per_month": 1500000,
-    "facilities": ["AC", "WiFi", "Laundry"],
-    "images": ["https://image.com/1.jpg"],
-    "ownerId": "uuid-owner",
-    "createdAt": "..."
-  }
-]
-```
-
 ### 2.2 Get Detail Kost
 - **Method:** `GET`
 - **Endpoint:** `/kost/:id`
 - **Akses:** Public
-- **Deskripsi:** Mengambil informasi spesifik dan detail tentang suatu properti kos berdasar `id`.
+- **Deskripsi:** Mengambil informasi spesifik dan detail tentang suatu properti kos, termasuk daftar tipe kamar (`rooms`).
 
-**Response Success:** Mengembalikan Data Object (Single) seperti struktur 2.1.
-
-### 2.3 Create Kost Baru (Khusus Owner)
-- **Method:** `POST`
-- **Endpoint:** `/kost`
-- **Akses:** Private, **Harus Role `OWNER`**
-- **Deskripsi:** Membuat pendaftaran tawaran kos baru oleh Bapak/Ibu Kos.
-
-**Request Body:**
+**Response Success:**
 ```json
 {
+  "id": "uuid-kost-1",
   "name": "Kost Ceria",
-  "description": "Kost nyaman dan strategis dekat kampus",
-  "address": "Jl. Merdeka No. 10",
-  "city": "Jakarta",
-  "price_per_month": 1500000,
-  "facilities": ["AC", "WiFi", "Laundry"],
-  "images": ["https://image.com/1.jpg"]
+  "rooms": [
+    {
+      "id": "uuid-room-1",
+      "name": "Kamar Mandi Dalam",
+      "price_per_month": 1200000,
+      "available_rooms": 3
+    }
+  ],
+  "owner": { "name": "Bapak Kos", "email": "..." }
 }
 ```
 
-### 2.4 Get Dashboard Kost Milik Sendiri (Khusus Owner)
+### 2.3 Create Kost Baru (Khusus Owner - Onboarding)
+- **Method:** `POST`
+- **Endpoint:** `/kost`
+- **Akses:** Private, **Harus Role `OWNER`**
+- **Deskripsi:** Membuat pendaftaran tawaran kos baru. **Setiap Owner hanya boleh memiliki 1 Kost.** Jika sudah punya, akan return error 409 Conflict.
+
+### 2.4 Get My Kost (Dashboard Owner)
 - **Method:** `GET`
 - **Endpoint:** `/kost/my`
 - **Akses:** Private, **Harus Role `OWNER`**
-- **Deskripsi:** Menampilkan semua kost yang dimiliki dan dikelola oleh `req.user.id`.
+- **Deskripsi:** Menampilkan data kost milik sendiri beserta daftar kamarnya.
 
 ### 2.5 Update Kost (Khusus Owner)
 - **Method:** `PATCH`
 - **Endpoint:** `/kost/:id`
 - **Akses:** Private, **Harus Role `OWNER`**
-- **Deskripsi:** Mengupdate informasi Kost. Semua body bersifat *opsional*.
-
-**Request Body (Opsional):**
-```json
-{
-  "name": "Kost Ceria Updated",
-  "price_per_month": 2000000
-}
-```
-
-### 2.6 Delete Kost (Khusus Owner)
-- **Method:** `DELETE`
-- **Endpoint:** `/kost/:id`
-- **Akses:** Private, **Harus Role `OWNER`**
-- **Deskripsi:** Menghapus record kost.
+- **Deskripsi:** Mengupdate informasi Kost utama.
 
 ---
 
-## 💼 3. Modul Booking / Pesanan Sewa
+## 🏗️ 3. Modul Kamar / Rooms (Detail Unit)
 
-### 3.1 Create Booking / Pesan Kost (Khusus Customer)
+### 3.1 Create Tipe Kamar (Khusus Owner)
+- **Method:** `POST`
+- **Endpoint:** `/kost/rooms`
+- **Akses:** Private, **Harus Role `OWNER`**
+- **Deskripsi:** Menambahkan jenis/tipe kamar ke dalam profil Kost milik owner.
+
+**Request Body:**
+```json
+{
+  "name": "Kamar AC & KM Dalam",
+  "description": "Kamar luas 3x4, AC Daikin, Springbed",
+  "price_per_month": 1500000,
+  "total_rooms": 10,
+  "available_rooms": 10,
+  "facilities": ["AC", "WiFi", "Kamar Mandi Dalam"]
+}
+```
+
+### 3.2 Update Tipe Kamar (Khusus Owner)
+- **Method:** `PATCH`
+- **Endpoint:** `/kost/rooms/:roomId`
+- **Akses:** Private, **Harus Role `OWNER`**
+- **Deskripsi:** Mengupdate detail unit kamar spesifik.
+
+### 3.3 Delete Tipe Kamar (Khusus Owner)
+- **Method:** `DELETE`
+- **Endpoint:** `/kost/rooms/:roomId`
+- **Akses:** Private, **Harus Role `OWNER`**
+- **Deskripsi:** Menghapus unit kamar tertentu. **(Catatan: Kost utama tidak dapat dihapus, hanya Unit Kamar yang boleh dihapus).**
+
+---
+
+## 💼 4. Modul Booking / Pesanan Sewa
+
+### 4.1 Create Booking / Pesan Kost (Khusus Customer)
 - **Method:** `POST`
 - **Endpoint:** `/booking`
 - **Akses:** Private, **Harus Role `CUSTOMER`**
-- **Deskripsi:** Transaksi pengajuan sewa kos. Total harga akan dikalkulasi otomatis (`durationMonths` * `price_per_month` Kost). Status otomatis menjadi `PENDING`.
+- **Deskripsi:** Transaksi pengajuan sewa. Status otomatis menjadi `PENDING`.
 
-**Request Body:**
-```json
-{
-  "kostId": "uuid-kost-id",
-  "startDate": "2024-05-01",
-  "durationMonths": 3
-}
-```
-
-**Response Success:**
-```json
-{
-  "id": "uuid-booking",
-  "kostId": "uuid-kost-id",
-  "customerId": "uuid-user-id",
-  "startDate": "2024-05-01",
-  "durationMonths": 3,
-  "totalPrice": 4500000,
-  "status": "PENDING",
-  "createdAt": "..."
-}
-```
-
-### 3.2 Get Transaksi Riwayat Sendiri (Khusus Customer)
-- **Method:** `GET`
-- **Endpoint:** `/booking`
-- **Akses:** Private, **Harus Role `CUSTOMER`**
-- **Deskripsi:** Menampilkan semua riwayat pesanan (baik pending, reject, atau approved) milik pengguna *Pencari Kos*.
-
-### 3.3 Get Pesanan Masuk (Khusus Owner)
-- **Method:** `GET`
-- **Endpoint:** `/booking/incoming`
-- **Akses:** Private, **Harus Role `OWNER`**
-- **Deskripsi:** Menampilkan dashboard bagi Pemilik Kos untuk melihat siapa saja *Customer* yang mengajukan penyewaan kamar pada semua Properti miliknya.
-
-### 3.4 Update Status Booking (Khusus Owner)
+### 4.2 Update Status Booking (Khusus Owner)
 - **Method:** `PATCH`
 - **Endpoint:** `/booking/:id/status`
 - **Akses:** Private, **Harus Role `OWNER`**
-- **Deskripsi:** Menyetujui atau menolak ajuan booking dari *Customer*. `id` pada endpoint adalah id dari `booking`.
+- **Deskripsi:** Menyetujui (`APPROVED`) atau menolak (`REJECTED`) ajuan sewa.
 
-**Request Body:**
-```json
-{
-  "status": "APPROVED" // Hanya boleh "APPROVED" atau "REJECTED"
-}
-```
+---
+
+## 🗨️ 5. Modul Chat Realtime (Socket.io)
+
+Layanan Chat menggunakan **WebSocket** untuk pesan instan dan **REST API** untuk riwayat.
+
+### 5.1 Memulai Chat
+- **Method:** `POST`
+- **Endpoint:** `/chat/start`
+- **Body:** `{ "ownerId": "uuid-owner" }`
+- **Deskripsi:** Membuat atau mengambil ID percakapan.
+
+### 5.2 Get Daftar Chat
+- **Method:** `GET`
+- **Endpoint:** `/chat`
+- **Deskripsi:** List orang yang pernah di-chat (untuk halaman inbox).
+
+### 5.3 Get Riwayat Pesan
+- **Method:** `GET`
+- **Endpoint:** `/chat/:conversationId`
+- **Deskripsi:** Riwayat bubble chat saat masuk ke room.
+
+### 5.4 Socket Messaging (Events)
+- **Host:** Base URL Backend
+- **Auth:** Kirim JWT di `handshake.auth.token`
+- **Events:**
+  - `joinRoom`: Emit `conversationId` saat buka room.
+  - `sendMessage`: Emit `{ conversationId, text }` untuk kirim pesan.
+  - `receiveMessage`: Server akan emit ini ke client saat ada pesan masuk.
+  - `typing`: Emit `{ conversationId, isTyping }` untuk status mengetik.
 
 ---
 
 ## 🚨 Error Handling
-
-Jika terjadi kesalahan (Autentikasi gagal / Role Terlarang / Data Invalid), Backend akan membuang response NestJS berbentuk:
-
+Backend menggunakan response standar NestJS:
 ```json
 {
   "statusCode": 400,
-  "message": ["email must be an email", "password should not be empty"],
+  "message": ["message error"],
   "error": "Bad Request"
 }
 ```

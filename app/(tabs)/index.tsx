@@ -19,7 +19,11 @@ export default function ExploreScreen() {
 
   useEffect(() => {
     if (user?.role === 'OWNER') {
-      router.replace('/owner-dashboard');
+      if (user.hasKost) {
+        router.replace('/owner-dashboard');
+      } else {
+        router.replace('/kost/create');
+      }
     }
   }, [user]);
 
@@ -50,30 +54,26 @@ export default function ExploreScreen() {
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20), backgroundColor: Colors[colorScheme].background }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 10, backgroundColor: Colors[colorScheme].background }]}>
         <View style={styles.headerTop}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-            <View style={{
-              width: 50, height: 50, backgroundColor: '#fff', borderRadius: 14,
-              justifyContent: 'center', alignItems: 'center',
-              shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 3
-            }}>
-              <Image
-                source={require('@/assets/images/logo_kost.jpg')}
-                style={{ width: 34, height: 34 }}
-                resizeMode="contain"
-              />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={[styles.iconBox, { backgroundColor: Colors[colorScheme].surface }]}>
+              <IconSymbol name="house.fill" size={24} color="#111" />
             </View>
-            <View style={{ justifyContent: 'center' }}>
-              <ThemedText type="title" style={{ fontSize: 24, lineHeight: 28, fontWeight: '800' }}>Kost Aja</ThemedText>
-            </View>
+            <ThemedText type="title" style={styles.headerTitle}>Kost Aja</ThemedText>
           </View>
-          <View style={[styles.avatar, { backgroundColor: Colors[colorScheme].tint + '20' }]}>
-            <IconSymbol name="person.fill" size={24} color={Colors[colorScheme].tint} />
-          </View>
+          <TouchableOpacity 
+            style={styles.avatarContainer}
+            onPress={() => router.push('/profile')}
+          >
+            <Image 
+              source={{ uri: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }} 
+              style={styles.avatarImage} 
+            />
+          </TouchableOpacity>
         </View>
 
-        <View style={[styles.searchContainer, { backgroundColor: Colors[colorScheme].surface, shadowColor: Colors[colorScheme].icon }]}>
+        <View style={[styles.searchWrapper, { backgroundColor: Colors[colorScheme].surface, shadowColor: '#000' }]}>
           <IconSymbol name="magnifyingglass" size={20} color={Colors[colorScheme].icon} />
           <TextInput
             style={[styles.searchInput, { color: Colors[colorScheme].text }]}
@@ -84,7 +84,7 @@ export default function ExploreScreen() {
       </View>
 
       {isLoading ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View style={styles.centerIndicator}>
           <ActivityIndicator size="large" color={Colors[colorScheme].tint} />
         </View>
       ) : (
@@ -98,46 +98,46 @@ export default function ExploreScreen() {
           }
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.card, { backgroundColor: Colors[colorScheme].surface, shadowColor: '#000' }]}
+              style={[styles.card, { backgroundColor: Colors[colorScheme].surface }]}
               onPress={() => router.push(`/kost/${item.id}`)}
-              activeOpacity={0.8}
+              activeOpacity={0.9}
             >
               <Image
                 source={{ uri: item.images?.[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=500' }}
                 style={styles.cardImage}
               />
               <View style={styles.cardContent}>
-                <View style={styles.cardHeader}>
-                  <ThemedText type="defaultSemiBold" style={styles.cardTitle}>{item.name}</ThemedText>
-                  <View style={styles.ratingContainer}>
-                    <IconSymbol name="star.fill" size={14} color="#F59E0B" />
-                    <ThemedText style={styles.ratingText}>4.8</ThemedText>
+                <View style={styles.cardInfo}>
+                  <View style={{ flex: 1 }}>
+                    <ThemedText type="defaultSemiBold" style={styles.kostName}>{item.name}</ThemedText>
+                    <ThemedText style={[styles.locationText, { color: Colors[colorScheme].icon }]}>
+                      {item.city}, Indonesia
+                    </ThemedText>
                   </View>
-                </View>
-
-                <View style={styles.locationContainer}>
-                  <IconSymbol name="mappin.and.ellipse" size={14} color={Colors[colorScheme].icon} />
-                  <ThemedText style={[styles.cityText, { color: Colors[colorScheme].icon }]}>{item.city}</ThemedText>
+                  <View style={styles.ratingBadge}>
+                    <ThemedText style={styles.ratingValue}>4.8</ThemedText>
+                    <IconSymbol name="star.fill" size={12} color="#F59E0B" />
+                  </View>
                 </View>
 
                 <View style={styles.facilitiesRow}>
-                  {item.facilities?.slice(0, 3).map((fac: string, idx: number) => (
-                    <View key={idx} style={[styles.facilityBadge, { backgroundColor: Colors[colorScheme].background }]}>
-                      <ThemedText style={[styles.facilityText, { color: Colors[colorScheme].icon }]}>{fac}</ThemedText>
+                  {item.facilities?.includes('WiFi') && (
+                    <View style={[styles.tag, { backgroundColor: '#E0F2F1' }]}>
+                      <IconSymbol name="safari.fill" size={14} color="#00796B" />
+                      <ThemedText style={[styles.tagText, { color: '#00796B' }]}>WIFI</ThemedText>
                     </View>
-                  ))}
+                  )}
+                  {item.facilities?.includes('Kasur') && (
+                    <View style={[styles.tag, { backgroundColor: '#E3F2FD' }]}>
+                      <IconSymbol name="bed.double.fill" size={14} color="#1976D2" />
+                      <ThemedText style={[styles.tagText, { color: '#1976D2' }]}>Kasur</ThemedText>
+                    </View>
+                  )}
                 </View>
 
-                <View style={styles.divider} />
-
-                <View style={styles.priceFooter}>
-                  <View style={styles.priceContainer}>
-                    <ThemedText type="subtitle" style={[styles.price, { color: Colors[colorScheme].tint }]}>
-                      Rp {item.price_per_month?.toLocaleString('id-ID')}
-                    </ThemedText>
-                    <ThemedText style={[styles.perMonth, { color: Colors[colorScheme].icon }]}>/bln</ThemedText>
-                  </View>
-                </View>
+                <ThemedText style={[styles.priceTag, { color: Colors[colorScheme].tint }]}>
+                  Rp {item.price_per_month?.toLocaleString('id-ID')} <ThemedText style={styles.pricePeriod}>/ bln</ThemedText>
+                </ThemedText>
               </View>
             </TouchableOpacity>
           )}
@@ -154,13 +154,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingBottom: 20,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
     zIndex: 10,
   },
   headerTop: {
@@ -169,119 +162,121 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  greeting: {
-    fontSize: 24,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  searchContainer: {
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  avatarContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    overflow: 'hidden',
+    backgroundColor: '#E5E7EB',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  searchWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 50,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    gap: 10,
+    height: 54,
+    borderRadius: 27,
+    paddingHorizontal: 20,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 10,
+    elevation: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    marginLeft: 10,
+    fontSize: 15,
+  },
+  centerIndicator: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   list: {
     padding: 20,
-    paddingTop: 10,
-    gap: 20,
+    gap: 25,
   },
   card: {
-    borderRadius: 20,
+    borderRadius: 30,
     overflow: 'hidden',
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowRadius: 20,
+    elevation: 10,
   },
   cardImage: {
     width: '100%',
-    height: 180,
-    resizeMode: 'cover',
+    height: 200,
   },
   cardContent: {
-    padding: 16,
+    padding: 20,
   },
-  cardHeader: {
+  cardInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
-  cardTitle: {
-    fontSize: 18,
-    flex: 1,
+  kostName: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 4,
   },
-  ratingContainer: {
+  locationText: {
+    fontSize: 14,
+  },
+  ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
     backgroundColor: '#FEF3C7',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 12,
+    gap: 4,
   },
-  ratingText: {
-    fontSize: 12,
+  ratingValue: {
+    fontSize: 13,
     fontWeight: 'bold',
     color: '#D97706',
   },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 12,
-  },
-  cityText: {
-    fontSize: 14,
-  },
   facilitiesRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
+    gap: 10,
+    marginBottom: 16,
   },
-  facilityBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  facilityText: {
-    fontSize: 12,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E5E7EB',
-    marginBottom: 12,
-    opacity: 0.5,
-  },
-  priceFooter: {
+  tag: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    gap: 6,
   },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  price: {
-    fontSize: 18,
-  },
-  perMonth: {
+  tagText: {
     fontSize: 12,
-    marginLeft: 4,
+    fontWeight: '700',
+  },
+  priceTag: {
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  pricePeriod: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#6B7280',
   },
 });

@@ -9,19 +9,23 @@ interface User {
   email: string;
   name: string;
   role: Role;
+  hasKost: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
+  accessToken: string | null;
   isLoading: boolean;
-  login: (token: string) => Promise<void>;
+  login: (userData: any) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -32,22 +36,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = await AsyncStorage.getItem('userToken');
       if (token) {
+        setAccessToken(token);
         const response = await api.get('/auth/me');
         setUser(response.data);
       }
     } catch (error) {
       console.error('Failed to restore session:', error);
       await AsyncStorage.removeItem('userToken');
+      setAccessToken(null);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const login = async (token: string) => {
+  const refreshUser = async () => {
     try {
-      await AsyncStorage.setItem('userToken', token);
       const response = await api.get('/auth/me');
       setUser(response.data);
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+    }
+  };
+
+  const login = async (data: any) => {
+    try {
+      await AsyncStorage.setItem('userToken', data.accessToken);
+      setAccessToken(data.accessToken);
+      setUser(data.user);
     } catch (error) {
       console.error('Login error in context:', error);
       throw error;
@@ -57,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await AsyncStorage.removeItem('userToken');
+      setAccessToken(null);
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
@@ -64,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, accessToken, isLoading, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

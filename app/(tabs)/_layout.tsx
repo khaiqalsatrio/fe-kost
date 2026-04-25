@@ -31,23 +31,38 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="safari.fill" color={color} />,
           href: role === 'CUSTOMER' ? '/' : null,
+        }}
+      />
+      <Tabs.Screen
+        name="explore"
+        options={{
+          title: 'Search',
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="magnifyingglass" color={color} />,
+          href: null,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
           title: 'History',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="clock.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="clock.arrow.2.circlepath" color={color} />,
           href: role === 'CUSTOMER' ? '/history' : null,
+        }}
+      />
+      <Tabs.Screen
+        name="inbox"
+        options={{
+          title: 'Inbox',
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="text.bubble.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="owner-dashboard"
         options={{
           title: 'Dashboard',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="list.bullet" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="square.grid.2x2.fill" color={color} />,
           href: role === 'OWNER' ? '/owner-dashboard' : null,
         }}
       />
@@ -55,7 +70,7 @@ export default function TabLayout() {
         name="owner-incoming"
         options={{
           title: 'Incoming',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="bell.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="bell.badge.fill" color={color} />,
           href: role === 'OWNER' ? '/owner-incoming' : null,
         }}
       />
@@ -63,7 +78,8 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="person.crop.circle.fill" color={color} />,
+          href: null,
         }}
       />
     </Tabs>

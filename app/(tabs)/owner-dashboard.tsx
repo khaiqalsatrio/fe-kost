@@ -16,15 +16,20 @@ export default function OwnerDashboard() {
   const insets = useSafeAreaInsets();
 
   const [myKosts, setMyKosts] = useState<any[]>([]);
+  const [pendingBookings, setPendingBookings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchMyKosts = async () => {
+  const fetchData = async () => {
     try {
-      const response = await api.get('/kost/my');
-      setMyKosts(response.data);
-    } catch (error) {
-      console.error('Error fetching my kosts:', error);
+      const [kostsRes, bookingsRes] = await Promise.all([
+        api.get('/kost/my'),
+        api.get('/booking/incoming')
+      ]);
+      setMyKosts(kostsRes.data);
+      setPendingBookings(bookingsRes.data.filter((b: any) => b.status === 'PENDING'));
+    } catch (error: any) {
+      console.error('Dashboard Error:', error.response?.status);
     } finally {
       setIsLoading(false);
       setRefreshing(false);
@@ -32,12 +37,23 @@ export default function OwnerDashboard() {
   };
 
   useEffect(() => {
-    fetchMyKosts();
+    fetchData();
   }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchMyKosts();
+    fetchData();
+  };
+
+  const handleUpdateStatus = async (id: string, status: 'APPROVED' | 'REJECTED') => {
+    try {
+      await api.patch(`/booking/${id}/status`, { status });
+      alert(`Pesanan berhasil di-${status.toLowerCase()}`);
+      fetchData();
+    } catch (error) {
+      console.error('Update status error:', error);
+      alert('Gagal update status pesanan');
+    }
   };
 
   return (
@@ -81,10 +97,55 @@ export default function OwnerDashboard() {
             <View style={[styles.statIconContainer, { backgroundColor: Colors[colorScheme].success + '15' }]}>
               <IconSymbol name="person.2.fill" size={24} color={Colors[colorScheme].success} />
             </View>
-            <ThemedText type="title" style={{ fontSize: 28 }}>0</ThemedText>
-            <ThemedText style={{ color: Colors[colorScheme].icon, marginTop: 4 }}>Penyewa Aktif</ThemedText>
+            <ThemedText type="title" style={{ fontSize: 28 }}>{pendingBookings.length}</ThemedText>
+            <ThemedText style={{ color: Colors[colorScheme].icon, marginTop: 4 }}>Request Pending</ThemedText>
           </View>
         </View>
+
+        {pendingBookings.length > 0 && (
+          <View style={{ marginBottom: 32 }}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>Request Sewa Baru</ThemedText>
+            <View style={{ gap: 12 }}>
+              {pendingBookings.map((booking) => (
+                <View key={booking.id} style={[styles.bookingRequestCard, { backgroundColor: Colors[colorScheme].surface, borderColor: Colors[colorScheme].border }]}>
+                  <View style={styles.bookingRequestHeader}>
+                    <View>
+                      <ThemedText type="defaultSemiBold">{booking.user?.name || 'Calon Penyewa'}</ThemedText>
+                      <ThemedText style={{ color: Colors[colorScheme].icon, fontSize: 13 }}>{booking.kost?.name} - {booking.room?.name || 'Standard'}</ThemedText>
+                    </View>
+                    <ThemedText style={[styles.bookingPrice, { color: Colors[colorScheme].tint }]}>
+                      Rp {booking.totalPrice?.toLocaleString('id-ID')}
+                    </ThemedText>
+                  </View>
+                  
+                  <View style={styles.bookingDetails}>
+                    <View style={styles.detailItem}>
+                      <IconSymbol name="calendar" size={14} color={Colors[colorScheme].icon} />
+                      <ThemedText style={{ fontSize: 12, color: Colors[colorScheme].icon }}>
+                        Mulai: {new Date(booking.startDate).toLocaleDateString()} ({booking.durationMonths} bln)
+                      </ThemedText>
+                    </View>
+                  </View>
+
+                  <View style={styles.actionButtons}>
+                    <TouchableOpacity 
+                      style={[styles.actionButton, { backgroundColor: '#FEE2E2' }]} 
+                      onPress={() => handleUpdateStatus(booking.id, 'REJECTED')}
+                    >
+                      <ThemedText style={{ color: '#991B1B', fontWeight: '700', fontSize: 13 }}>Tolak</ThemedText>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.actionButton, { backgroundColor: Colors[colorScheme].tint }]} 
+                      onPress={() => handleUpdateStatus(booking.id, 'APPROVED')}
+                    >
+                      <ThemedText style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Terima</ThemedText>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
 
         <ThemedText type="subtitle" style={styles.sectionTitle}>Kost Saya</ThemedText>
         
@@ -252,5 +313,45 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
+  },
+  bookingRequestCard: {
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  bookingRequestHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  bookingPrice: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  bookingDetails: {
+    marginBottom: 16,
+    gap: 8,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

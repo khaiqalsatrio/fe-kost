@@ -10,9 +10,11 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import api from '@/utils/api';
 import { ActivityIndicator } from 'react-native';
+import { useAuth } from '@/context/AuthContext';
 
 export default function CreateKostScreen() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const colorScheme = useColorScheme() ?? 'light';
   const insets = useSafeAreaInsets();
   
@@ -39,11 +41,12 @@ export default function CreateKostScreen() {
         address: formData.address,
         city: formData.city,
         price_per_month: Number(formData.price),
-        facilities: ['WiFi', 'Kasur'], // Default facilities placeholder
+        facilities: ['WiFi', 'Kasur'], 
         images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=1000'],
       });
       alert('Kost berhasil dipublikasikan!');
-      router.back();
+      await refreshUser();
+      router.replace('/owner-dashboard');
     } catch (error: any) {
       console.error('Error creating kost:', error);
       const message = error.response?.data?.message || 'Gagal membuat kost. Silakan coba lagi.';
