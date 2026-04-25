@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Image, ScrollView, StyleSheet, TouchableOpacity, View, RefreshControl, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,52 +8,26 @@ import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import api from '@/utils/api';
+
+import { useOwnerStats } from '@/hooks/use-owner-stats';
+import { styles } from './owner-dashboard.styles';
 
 export default function OwnerDashboard() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
   const insets = useSafeAreaInsets();
 
-  const [myKosts, setMyKosts] = useState<any[]>([]);
-  const [pendingBookings, setPendingBookings] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const {
+    myKosts,
+    pendingBookings,
+    isLoading,
+    refreshing,
+    onRefresh,
+    updateBookingStatus
+  } = useOwnerStats();
 
-  const fetchData = async () => {
-    try {
-      const [kostsRes, bookingsRes] = await Promise.all([
-        api.get('/kost/my'),
-        api.get('/booking/incoming')
-      ]);
-      setMyKosts(kostsRes.data);
-      setPendingBookings(bookingsRes.data.filter((b: any) => b.status === 'PENDING'));
-    } catch (error: any) {
-      console.error('Dashboard Error:', error.response?.status);
-    } finally {
-      setIsLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchData();
-  };
-
-  const handleUpdateStatus = async (id: string, status: 'APPROVED' | 'REJECTED') => {
-    try {
-      await api.patch(`/booking/${id}/status`, { status });
-      alert(`Pesanan berhasil di-${status.toLowerCase()}`);
-      fetchData();
-    } catch (error) {
-      console.error('Update status error:', error);
-      alert('Gagal update status pesanan');
-    }
+  const handleUpdateStatus = (id: string, status: 'APPROVED' | 'REJECTED') => {
+    updateBookingStatus(id, status);
   };
 
   return (
@@ -202,156 +176,3 @@ export default function OwnerDashboard() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 3,
-    zIndex: 10,
-  },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  content: {
-    padding: 24,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 32,
-  },
-  statCard: {
-    flex: 1,
-    padding: 20,
-    borderRadius: 20,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  statIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    marginBottom: 16,
-  },
-  emptyState: {
-    padding: 30,
-    alignItems: 'center',
-    borderRadius: 20,
-    borderStyle: 'dashed',
-    borderWidth: 1.5,
-  },
-  emptyIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  emptyButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  kostItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  kostItemImage: {
-    width: 100,
-    height: 100,
-  },
-  addButtonSticky: {
-    height: 56,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  bookingRequestCard: {
-    padding: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  bookingRequestHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  bookingPrice: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  bookingDetails: {
-    marginBottom: 16,
-    gap: 8,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});

@@ -32,7 +32,7 @@ export default function ProfileScreen() {
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20), backgroundColor: Colors[colorScheme].surface }]}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20), backgroundColor: Colors[colorScheme].surface, borderBottomColor: Colors[colorScheme].border }]}>
         <ThemedText type="title" style={styles.headerTitle}>Profile</ThemedText>
       </View>
 
@@ -100,12 +100,8 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 3,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
     zIndex: 10,
   },
   headerTitle: {

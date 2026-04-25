@@ -1,6 +1,6 @@
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -47,8 +47,8 @@ export default function ManageRoomsScreen() {
       'Apakah Anda yakin ingin menghapus tipe kamar ini?',
       [
         { text: 'Batal', style: 'cancel' },
-        { 
-          text: 'Hapus', 
+        {
+          text: 'Hapus',
           style: 'destructive',
           onPress: async () => {
             try {
@@ -67,7 +67,7 @@ export default function ManageRoomsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ 
+      <Stack.Screen options={{
         title: 'Kelola Kamar',
         headerShown: true,
         headerLeft: () => (
@@ -76,8 +76,8 @@ export default function ManageRoomsScreen() {
           </TouchableOpacity>
         ),
         headerRight: () => (
-          <TouchableOpacity 
-            onPress={() => router.push({ pathname: '/kost/rooms/create', params: { kostId: id } })} 
+          <TouchableOpacity
+            onPress={() => router.push({ pathname: '/kost/rooms/create', params: { kostId: id } })}
             style={{ marginRight: 10 }}
           >
             <IconSymbol name="plus.circle.fill" size={24} color={Colors[colorScheme].tint} />
@@ -90,7 +90,7 @@ export default function ManageRoomsScreen() {
           <ActivityIndicator size="large" color={Colors[colorScheme].tint} />
         </View>
       ) : (
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 20 }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
@@ -114,13 +114,13 @@ export default function ManageRoomsScreen() {
                     </View>
 
                     <View style={styles.actions}>
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         style={[styles.iconButton, { backgroundColor: Colors[colorScheme].background }]}
                         onPress={() => router.push({ pathname: '/kost/rooms/create', params: { kostId: id, roomId: room.id, roomData: JSON.stringify(room) } })}
                       >
                         <IconSymbol name="pencil" size={18} color={Colors[colorScheme].icon} />
                       </TouchableOpacity>
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         style={[styles.iconButton, { backgroundColor: '#FEE2E2' }]}
                         onPress={() => handleDeleteRoom(room.id)}
                       >
@@ -143,7 +143,7 @@ export default function ManageRoomsScreen() {
       )}
 
       {/* Floating Action Button */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[styles.fab, { backgroundColor: Colors[colorScheme].tint, bottom: insets.bottom + 20 }]}
         onPress={() => router.push({ pathname: '/kost/rooms/create', params: { kostId: id } })}
       >

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { StyleSheet, View, FlatList, RefreshControl, ActivityIndicator, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,41 +7,33 @@ import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import api from '@/utils/api';
+
+import { useBookings } from '@/hooks/use-bookings';
 
 export default function HistoryScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const insets = useSafeAreaInsets();
 
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const fetchHistory = async () => {
-    try {
-      const response = await api.get('/booking');
-      setBookings(response.data);
-    } catch (error) {
-      console.error('Error fetching booking history:', error);
-    } finally {
-      setIsLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchHistory();
-  };
+  const { bookings, isLoading, refreshing, onRefresh } = useBookings();
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 20), backgroundColor: Colors[colorScheme].surface, borderBottomColor: Colors[colorScheme].border }]}>
-        <ThemedText type="title" style={styles.headerTitle}>Riwayat Booking</ThemedText>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <View style={{
+            width: 44, height: 44, backgroundColor: '#fff', borderRadius: 12,
+            justifyContent: 'center', alignItems: 'center',
+            shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 3,
+            borderWidth: 1, borderColor: '#f3f4f6'
+          }}>
+            <Image
+              source={require('@/assets/images/logo_kost.jpg')}
+              style={{ width: 30, height: 30 }}
+              resizeMode="contain"
+            />
+          </View>
+          <ThemedText type="title" style={styles.headerTitle}>Riwayat Booking</ThemedText>
+        </View>
       </View>
       
       {isLoading && !refreshing ? (
@@ -101,17 +93,12 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 16,
     borderBottomWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 3,
     zIndex: 10,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '800',
   },
   content: {

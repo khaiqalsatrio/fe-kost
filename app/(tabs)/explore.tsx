@@ -1,5 +1,5 @@
 import { Image, Platform, StyleSheet } from 'react-native';
-import { useEffect } from 'react';
+import React from 'react';
 import { useRouter } from 'expo-router';
 import { Collapsible } from '@/components/ui/collapsible';
 import { ExternalLink } from '@/components/external-link';
@@ -8,17 +8,13 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Fonts } from '@/constants/theme';
-import { useAuth } from '@/context/AuthContext';
+
+import { useAuthRedirect } from '@/hooks/use-auth-redirect';
 
 export default function ExploreTipsScreen() {
   const router = useRouter();
-  const { user } = useAuth();
 
-  useEffect(() => {
-    if (user?.role === 'OWNER') {
-      router.replace('/owner-dashboard');
-    }
-  }, [user]);
+  useAuthRedirect();
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}

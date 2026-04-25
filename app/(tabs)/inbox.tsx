@@ -1,225 +1,235 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import React from 'react';
+import { 
+  StyleSheet, 
+  View, 
+  FlatList, 
+  TouchableOpacity, 
+  ActivityIndicator, 
+  RefreshControl,
+  TextInput,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+  Image
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Image as ExpoImage } from 'expo-image';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import api from '@/utils/api';
 import { useAuth } from '@/context/AuthContext';
+
+import { useChats } from '@/hooks/use-chats';
+
+import { styles } from './inbox.styles';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const AVATAR_COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#8B5CF6'];
 
 export default function InboxScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme() ?? 'light';
+  const theme = Colors[colorScheme];
 
-  const [chats, setChats] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const {
+    chats,
+    filteredChats,
+    isLoading,
+    refreshing,
+    searchQuery,
+    setSearchQuery,
+    activeTab,
+    setActiveTab,
+    onRefresh
+  } = useChats();
 
-  const fetchChats = async () => {
-    try {
-      const response = await api.get('/chat');
-      setChats(response.data);
-    } catch (error) {
-      console.error('Error fetching chats:', error);
-    } finally {
-      setIsLoading(false);
-      setRefreshing(false);
-    }
+  const getAvatarColor = (name: string) => {
+    const charCode = name?.charCodeAt(0) || 0;
+    return AVATAR_COLORS[charCode % AVATAR_COLORS.length];
   };
 
-  useEffect(() => {
-    fetchChats();
-  }, []);
+  const renderHeader = () => (
+    <View style={styles.headerContent}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <View style={{
+          width: 44, height: 44, backgroundColor: '#fff', borderRadius: 12,
+          justifyContent: 'center', alignItems: 'center',
+          shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 3,
+          borderWidth: 1, borderColor: '#f3f4f6'
+        }}>
+          <Image
+            source={require('@/assets/images/logo_kost.jpg')}
+            style={{ width: 30, height: 30 }}
+            resizeMode="contain"
+          />
+        </View>
+        <ThemedText type="title" style={styles.headerTitle}>Pesan</ThemedText>
+      </View>
+      
+      <View style={[styles.searchContainer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <IconSymbol name="magnifyingglass" size={20} color={theme.icon} />
+        <TextInput
+          placeholder="Cari pesan..."
+          placeholderTextColor={theme.icon}
+          style={[styles.searchInput, { color: theme.text }]}
+          value={searchQuery}
+          onChangeText={(text) => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setSearchQuery(text);
+          }}
+        />
+      </View>
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchChats();
-  };
+      <View style={styles.tabContainer}>
+        <TouchableOpacity 
+          onPress={() => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+            setActiveTab('all');
+          }}
+          style={[
+            styles.tab, 
+            activeTab === 'all' && { backgroundColor: theme.tint, borderColor: theme.tint }
+          ]}
+        >
+          <ThemedText style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>
+            Semua
+          </ThemedText>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          onPress={() => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+            setActiveTab('unread');
+          }}
+          style={[
+            styles.tab, 
+            activeTab === 'unread' && { backgroundColor: theme.tint, borderColor: theme.tint }
+          ]}
+        >
+          <ThemedText style={[styles.tabText, activeTab === 'unread' && styles.activeTabText]}>
+            Belum Dibaca
+          </ThemedText>
+          {chats.some(c => c.unreadCount > 0) && activeTab !== 'unread' && (
+            <View style={styles.tabBadge} />
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   const renderChatItem = ({ item }: { item: any }) => {
-    // Tentukan siapa lawan bicaranya (partner)
     const partner = user?.role === 'CUSTOMER' ? item.owner : item.customer;
+    const avatarColor = getAvatarColor(partner?.name || 'P');
 
     return (
       <TouchableOpacity 
-        style={[styles.chatItem, { borderBottomColor: Colors[colorScheme].border }]}
+        style={[styles.chatCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
+        activeOpacity={0.7}
         onPress={() => router.push({
           pathname: '/chat/[id]',
           params: { id: item.id, partnerName: partner?.name }
         })}
       >
-        <View style={[styles.avatar, { backgroundColor: Colors[colorScheme].tint + '20' }]}>
-          <ThemedText style={{ color: Colors[colorScheme].tint, fontWeight: '700' }}>
-            {partner?.name?.charAt(0).toUpperCase() || 'P'}
-          </ThemedText>
+        <View style={[styles.avatarContainer, { backgroundColor: avatarColor + '20' }]}>
+          {partner?.avatar ? (
+            <ExpoImage 
+              source={{ uri: partner.avatar }} 
+              style={styles.avatarImage} 
+            />
+          ) : (
+            <ThemedText style={[styles.avatarInitial, { color: avatarColor }]}>
+              {partner?.name?.charAt(0).toUpperCase() || 'P'}
+            </ThemedText>
+          )}
+          <View style={[styles.statusDot, { backgroundColor: theme.success }]} />
         </View>
-        <View style={styles.chatContent}>
-          <View style={styles.chatHeader}>
-            <ThemedText type="defaultSemiBold" style={styles.partnerName}>{partner?.name || 'Partner Chat'}</ThemedText>
-            <ThemedText style={styles.timeText}>
+
+        <View style={styles.chatInfo}>
+          <View style={styles.chatTopRow}>
+            <ThemedText type="defaultSemiBold" style={styles.partnerName} numberOfLines={1}>
+              {partner?.name || 'Partner Chat'}
+            </ThemedText>
+            <ThemedText style={[styles.timeText, { color: theme.icon }]}>
               {new Date(item.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </ThemedText>
           </View>
-          <ThemedText numberOfLines={1} style={[styles.lastMessage, { color: Colors[colorScheme].icon }]}>
-            {item.lastMessage || 'Ketuk untuk mulai mengobrol...'}
-          </ThemedText>
-        </View>
-        {item.unreadCount > 0 && (
-          <View style={[styles.unreadBadge, { backgroundColor: Colors[colorScheme].tint }]}>
-            <ThemedText style={styles.unreadText}>{item.unreadCount}</ThemedText>
+          
+          <View style={styles.chatBottomRow}>
+            <ThemedText 
+              numberOfLines={1} 
+              style={[
+                styles.lastMessage, 
+                { color: item.unreadCount > 0 ? theme.text : theme.icon, fontWeight: item.unreadCount > 0 ? '600' : '400' }
+              ]}
+            >
+              {item.lastMessage || 'Ketuk untuk mulai mengobrol...'}
+            </ThemedText>
+            
+            {item.unreadCount > 0 && (
+              <View style={[styles.unreadBadge, { backgroundColor: theme.tint }]}>
+                <ThemedText style={styles.unreadCountText}>{item.unreadCount}</ThemedText>
+              </View>
+            )}
           </View>
-        )}
+        </View>
       </TouchableOpacity>
     );
   };
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20), backgroundColor: Colors[colorScheme].surface, borderBottomColor: Colors[colorScheme].border }]}>
-        <ThemedText type="title" style={styles.headerTitle}>Pesan</ThemedText>
+    <ThemedView style={styles.container}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20), borderBottomColor: theme.border }]}>
+        {renderHeader()}
       </View>
 
       {isLoading && !refreshing ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={Colors[colorScheme].tint} />
+          <ActivityIndicator size="large" color={theme.tint} />
         </View>
-      ) : chats.length > 0 ? (
+      ) : filteredChats.length > 0 ? (
         <FlatList
-          data={chats}
+          data={filteredChats}
           keyExtractor={(item) => item.id}
           renderItem={renderChatItem}
           contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.tint} />
           }
         />
       ) : (
         <View style={styles.emptyState}>
-          <View style={[styles.emptyIcon, { backgroundColor: Colors[colorScheme].surface }]}>
-            <IconSymbol name="bubble.left.and.bubble.right.fill" size={60} color={Colors[colorScheme].border} />
+          <View style={[styles.emptyIconContainer, { backgroundColor: theme.surface }]}>
+            <IconSymbol name="bubble.left.and.bubble.right.fill" size={60} color={theme.icon} />
           </View>
-          <ThemedText type="subtitle" style={styles.emptyTitle}>Belum ada pesan</ThemedText>
-          <ThemedText style={[styles.emptyDesc, { color: Colors[colorScheme].icon }]}>
-            Pesan Anda bersama pemilik kost akan muncul di sini.
+          <ThemedText type="subtitle" style={styles.emptyTitle}>
+            {searchQuery ? 'Tidak ada hasil' : 'Belum ada pesan'}
           </ThemedText>
-          <TouchableOpacity 
-            style={[styles.refreshButton, { borderColor: Colors[colorScheme].tint }]}
-            onPress={onRefresh}
-          >
-            <ThemedText style={{ color: Colors[colorScheme].tint, fontWeight: '600' }}>Refresh</ThemedText>
-          </TouchableOpacity>
+          <ThemedText style={[styles.emptyDesc, { color: theme.icon }]}>
+            {searchQuery 
+              ? `Tidak dapat menemukan obrolan untuk "${searchQuery}"`
+              : 'Pesan Anda bersama pemilik kost akan muncul di sini.'}
+          </ThemedText>
+          {!searchQuery && (
+            <TouchableOpacity 
+              style={[styles.primaryButton, { backgroundColor: theme.tint }]}
+              onPress={onRefresh}
+            >
+              <ThemedText style={styles.primaryButtonText}>Segarkan</ThemedText>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </ThemedView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    zIndex: 10,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-  },
-  list: {
-    paddingHorizontal: 16,
-  },
-  chatItem: {
-    flexDirection: 'row',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  chatContent: {
-    flex: 1,
-  },
-  chatHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  partnerName: {
-    fontSize: 17,
-  },
-  timeText: {
-    fontSize: 12,
-    color: '#999',
-  },
-  lastMessage: {
-    fontSize: 14,
-  },
-  unreadBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  unreadText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  emptyIcon: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    marginBottom: 8,
-  },
-  emptyDesc: {
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  refreshButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 20,
-    borderWidth: 1.5,
-  },
-});

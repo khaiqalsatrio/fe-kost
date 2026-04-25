@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { StyleSheet, View, FlatList, RefreshControl, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,46 +7,23 @@ import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import api from '@/utils/api';
+
+import { useIncomingBookings } from '@/hooks/use-incoming-bookings';
 
 export default function OwnerIncomingBooking() {
   const colorScheme = useColorScheme() ?? 'light';
   const insets = useSafeAreaInsets();
 
-  const [incoming, setIncoming] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const {
+    incoming,
+    isLoading,
+    refreshing,
+    onRefresh,
+    updateBookingStatus
+  } = useIncomingBookings();
 
-  const fetchIncoming = async () => {
-    try {
-      const response = await api.get('/booking/incoming');
-      setIncoming(response.data);
-    } catch (error) {
-      console.error('Error fetching incoming bookings:', error);
-    } finally {
-      setIsLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchIncoming();
-  }, []);
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchIncoming();
-  };
-
-  const handleUpdateStatus = async (id: string, status: 'APPROVED' | 'REJECTED') => {
-    try {
-      await api.patch(`/booking/${id}/status`, { status });
-      Alert.alert('Berhasil', `Booking telah di-${status.toLowerCase()}`);
-      fetchIncoming();
-    } catch (error) {
-      console.error('Error updating status:', error);
-      Alert.alert('Gagal', 'Terjadi kesalahan saat mengupdate status.');
-    }
+  const handleUpdateStatus = (id: string, status: 'APPROVED' | 'REJECTED') => {
+    updateBookingStatus(id, status);
   };
 
   return (
@@ -141,11 +118,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 3,
     zIndex: 10,
   },
   headerTitle: {

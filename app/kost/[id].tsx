@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { StyleSheet, View, Image, ScrollView, TouchableOpacity, useWindowDimensions, Platform, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,8 +8,10 @@ import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import api from '@/utils/api';
 import { useAuth } from '@/context/AuthContext';
+
+import { useKostDetail } from '@/hooks/use-kost-detail';
+import { styles } from './kost-detail.styles';
 
 export default function KostDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -19,23 +21,7 @@ export default function KostDetailScreen() {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme() ?? 'light';
 
-  const [kost, setKost] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchDetail = async () => {
-    try {
-      const response = await api.get(`/kost/${id}`);
-      setKost(response.data);
-    } catch (error) {
-      console.error('Error fetching Detail:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDetail();
-  }, [id]);
+  const { kost, isLoading, startChat } = useKostDetail(id as string);
 
   if (isLoading) {
     return (
@@ -172,17 +158,7 @@ export default function KostDetailScreen() {
           </View>
           <TouchableOpacity 
             style={[styles.footerChatButton, { borderColor: Colors[colorScheme].tint }]}
-            onPress={async () => {
-              try {
-                const res = await api.post('/chat/start', { ownerId: kost.ownerId });
-                router.push({
-                  pathname: '/chat/[id]',
-                  params: { id: res.data.id, partnerName: kost.owner?.name || 'Pemilik Kost' }
-                });
-              } catch (error) {
-                console.error('Error starting chat:', error);
-              }
-            }}
+            onPress={() => startChat(kost.ownerId, kost.owner?.name)}
           >
             <IconSymbol name="text.bubble.fill" size={22} color={Colors[colorScheme].tint} />
           </TouchableOpacity>
@@ -198,229 +174,3 @@ export default function KostDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  imageHeader: {
-    position: 'relative',
-    height: 400,
-  },
-  headerImage: {
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  backButton: {
-    position: 'absolute',
-    left: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    zIndex: 20,
-  },
-  backCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  backText: {
-    color: '#333',
-    fontWeight: '700',
-    fontSize: 14,
-    textShadowColor: 'rgba(255, 255, 255, 0.5)',
-    textShadowRadius: 2,
-  },
-  paginationDots: {
-    position: 'absolute',
-    bottom: 50,
-    alignSelf: 'center',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.4)',
-  },
-  activeDot: {
-    width: 24,
-    backgroundColor: '#fff',
-  },
-  imageCounter: {
-    position: 'absolute',
-    bottom: 50,
-    right: 20,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
-  },
-  counterText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  contentCard: {
-    marginTop: -40,
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-    padding: 24,
-    minHeight: 500,
-  },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 20,
-  },
-  kostName: {
-    fontSize: 28,
-    fontWeight: '900',
-    marginBottom: 4,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  locationText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  ratingBox: {
-    width: 54,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  ratingValue: {
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  ownerBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 12,
-    borderRadius: 16,
-    marginBottom: 20,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionLabel: {
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: 8,
-  },
-  sectionContent: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  descriptionBox: {
-    flexDirection: 'row',
-    gap: 10,
-    alignItems: 'flex-start',
-  },
-  roomList: {
-    gap: 12,
-    marginTop: 8,
-  },
-  roomCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 20,
-    borderWidth: 1,
-    gap: 15,
-  },
-  roomThumb: {
-    width: 70,
-    height: 70,
-    borderRadius: 12,
-  },
-  roomInfo: {
-    flex: 1,
-  },
-  roomName: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  availableText: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginVertical: 2,
-  },
-  roomPrice: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  floatingFooter: {
-    position: 'absolute',
-    bottom: 30,
-    left: 20,
-    right: 20,
-    height: 80,
-    borderRadius: 40,
-    paddingHorizontal: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
-    zIndex: 100,
-  },
-  footerPrice: {
-    flex: 1,
-    paddingLeft: 10,
-  },
-  footerLabel: {
-    fontSize: 11,
-    color: '#6B7280',
-  },
-  footerAmount: {
-    fontSize: 15,
-    fontWeight: '900',
-  },
-  footerPeriod: {
-    fontSize: 11,
-    fontWeight: '400',
-    color: '#6B7280',
-  },
-  footerChatButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  footerMainButton: {
-    paddingHorizontal: 20,
-    height: 54,
-    borderRadius: 27,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  footerMainText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '900',
-  },
-});
